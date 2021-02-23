@@ -1,4 +1,5 @@
 # Evolved BBO Instances
+[![DOI](https://zenodo.org/badge/198110974.svg)](https://zenodo.org/badge/latestdoi/198110974)
 
 This repository makes available the instances used in the paper: M.A. Muñoz and K. Smith-Miles ["Generating New Space-Filling Test Instances for Continuous Black-Box Optimization"](https://doi.org/10.1162/evco_a_00262) Evol. Comput. 2019. It provides instances from four sources.
 
