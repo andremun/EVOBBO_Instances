@@ -11,39 +11,47 @@ Evol. Comput., 2019.
 The repository provides instances from four sources:
 
 1. **Generated instances** from the methodology in the paper above, through
-   the function `munozsmithmiles.m` (needs `square.m` and `negexp.m`,
-   also in this repository; see that function's version history for two
-   bugs fixed in 2026 that made every call fail before the fix).
+   the function `matlab/munozsmithmiles.m` (needs `matlab/square.m` and
+   `matlab/negexp.m`; see that function's version history for two bugs
+   fixed in 2026 that made every call fail before the fix).
 2. **Reference BBOB instances** from the "Comparing Continuous Optimization"
-   benchmarking platform v13.09 (2011), in `bbob.v13.09/`. Use the
+   benchmarking platform v13.09 (2011), in `matlab/bbob.v13.09/`. Use the
    [current COCO/BBOB platform](https://github.com/numbbo/coco) for new
    work. See [Reusing this repository](#reusing-this-repository) below.
 3. **Langdon and Poli instances**, from W.B. Langdon and R. Poli, ["Evolving
    problems to learn about Particle Swarm Optimizers and other search
    algorithms"](https://doi.org/10.1109/TEVC.2006.886448), IEEE Trans. Evol.
-   Comput. 11(5) 561-578, 2007, through the function `langdonpoli.m`.
+   Comput. 11(5) 561-578, 2007, through the function `matlab/langdonpoli.m`.
 4. **Clustering-based instances**, following M. Gallagher, ["Towards
    improved benchmarking of black-box optimization algorithms using
    clustering problems"](https://doi.org/10.1007/s00500-016-2094-1), Soft
-   Comput. 20(10) 3835-3849, 2016, through the function `clustergallagher.m`,
-   evaluated over the clustering datasets in this repository (see
-   [Datasets](#datasets) below).
+   Comput. 20(10) 3835-3849, 2016, through the function
+   `matlab/clustergallagher.m`, evaluated over the clustering datasets in
+   this repository (see [Datasets](#datasets) below).
+
+Every function above has a Python equivalent, see [Usage](#usage) below.
 
 ## Contents
 
+The repository is organized by platform. MATLAB and Python code each
+read the same data files from the shared `data/` directory, so there is
+one copy of each dataset.
+
 ```
 EVOBBO_Instances/
-├── munozsmithmiles.m       # generated BBO instances (see source 1 above)
-├── munozsmithmiles.mat     # instance definitions used by munozsmithmiles.m
-├── langdonpoli.m            # Langdon and Poli instances (source 3 above)
-├── clustergallagher.m       # clustering-based instances (source 4 above)
-├── square.m, negexp.m       # helper functions used by munozsmithmiles.m
-├── *.mat                    # clustering datasets used by clustergallagher.m
-│                             # (see Datasets below; excludes munozsmithmiles.mat)
-├── bbob.v13.09/             # reference COCO/BBOB v13.09 platform (MATLAB)
-├── evobbo_instances/        # Python port of the 3 functions above
-├── tests/                   # Python test suite, checked against MATLAB
-├── pyproject.toml, requirements.txt  # Python packaging
+├── data/                    # shared data, read by both platforms below
+│   ├── munozsmithmiles.mat  # instance definitions for munozsmithmiles
+│   └── *.mat                 # clustering datasets (see Datasets below)
+├── matlab/
+│   ├── munozsmithmiles.m    # generated BBO instances (see source 1 above)
+│   ├── langdonpoli.m         # Langdon and Poli instances (source 3 above)
+│   ├── clustergallagher.m    # clustering-based instances (source 4 above)
+│   ├── square.m, negexp.m    # helper functions used by munozsmithmiles.m
+│   └── bbob.v13.09/          # reference COCO/BBOB v13.09 platform
+├── python/
+│   ├── evobbo_instances/     # Python port of the 3 functions above
+│   ├── tests/                # Python test suite, checked against MATLAB
+│   └── pyproject.toml, requirements.txt
 ├── LICENSE                  # MIT license for the code in this repository
 └── .github/ISSUE_TEMPLATE/  # bug report and feature request templates
 ```
@@ -56,18 +64,25 @@ The MATLAB code needs a current version of
 [MATLAB](https://www.mathworks.com). It has been tested on r2018b, and
 should work on earlier versions too. Most functions are vectorized, so
 they run fast under MATLAB. No toolbox beyond base MATLAB is required.
+Add `matlab/` to the MATLAB path before calling any function:
+
+```matlab
+addpath('matlab');
+```
 
 ### Python
 
-The Python port needs Python 3.9 or later. From the repository root:
+The Python port needs Python 3.9 or later. From the `python/` directory:
 
 ```bash
+cd python
 pip install -e .
 ```
 
 This installs the `evobbo_instances` package and its two dependencies,
 `numpy` and `scipy`. Run `pip install -e ".[test]"` instead to also get
-`pytest`, and run the test suite with `pytest tests/`.
+`pytest`, and run the test suite with `pytest tests/` (still from
+`python/`).
 
 ## Usage
 
@@ -75,7 +90,7 @@ Each function takes a matrix of candidate solutions `X` and returns a
 vector of fitness values `Y`. Full argument details are in the MATLAB
 header comment or the Python docstring of each function.
 
-### Generated instances (`munozsmithmiles.m` / `munozsmithmiles.py`)
+### Generated instances (`matlab/munozsmithmiles.m` / `python/evobbo_instances/munozsmithmiles.py`)
 
 ```matlab
 % X is a (d x N) matrix of candidate solutions.
@@ -103,10 +118,12 @@ The valid range of `fid` depends on `sid` and `d`:
 MATLAB and Python functions raise a clear error for these, rather than
 returning a silently wrong value.
 
-This function needs `munozsmithmiles.mat` (MATLAB: on the MATLAB path;
-Python: in `data_dir`, which defaults to the repository root).
+This function needs `data/munozsmithmiles.mat`. Both the MATLAB and
+Python functions find it there automatically, relative to their own
+location; pass `data_dir` to the Python function to point somewhere
+else instead.
 
-### Langdon and Poli instances (`langdonpoli.m` / `langdonpoli.py`)
+### Langdon and Poli instances (`matlab/langdonpoli.m` / `python/evobbo_instances/langdonpoli.py`)
 
 ```matlab
 % X is a (d x N) matrix of candidate solutions in [-5, 5]^2.
@@ -119,7 +136,7 @@ from evobbo_instances import langdonpoli
 Y = langdonpoli(X, fid)  # X: numpy array, shape (2, N)
 ```
 
-### Clustering-based instances (`clustergallagher.m` / `clustergallagher.py`)
+### Clustering-based instances (`matlab/clustergallagher.m` / `python/evobbo_instances/clustergallagher.py`)
 
 ```matlab
 % X is a (k*p x N) matrix of candidate solutions, where each column
@@ -127,69 +144,75 @@ Y = langdonpoli(X, fid)  # X: numpy array, shape (2, N)
 % dimensionality p.
 % dataset is a (p x n) matrix, transposed from the (n x p) `data`
 % variable stored in each .mat file listed in Datasets below.
-load('iris.mat');           % loads variable `data`, shape (150 x 4)
+load('data/iris.mat');      % loads variable `data`, shape (150 x 4)
 Y = clustergallagher(X, data');
 ```
 
 ```python
 from evobbo_instances import clustergallagher
 from scipy.io import loadmat
-data = loadmat('iris.mat')['data']       # shape (150, 4) = (n, p)
+data = loadmat('data/iris.mat')['data']  # shape (150, 4) = (n, p)
 Y = clustergallagher(X, data.T)          # dataset: shape (p, n)
 ```
 
 ## Datasets
 
-Each `.mat` file below (all files except `munozsmithmiles.mat`) stores one
-variable, `data`, of shape (n points x p features), for use as the
-`dataset` input to `clustergallagher.m`.
+Each `.mat` file below, in `data/` (all files except
+`munozsmithmiles.mat`), stores one variable, `data`, of shape (n points
+x p features), for use as the `dataset` input to `clustergallagher`.
 
 | File | Points (n) | Features (p) |
 |---|---|---|
-| `abalone.mat` | 4177 | 7 |
-| `balance_scale.mat` | 625 | 4 |
-| `banknote_authentication.mat` | 1372 | 4 |
-| `blood_transfusion.mat` | 748 | 4 |
-| `ecoli.mat` | 336 | 7 |
-| `energy_efficiency.mat` | 768 | 8 |
-| `german_towns.mat` | 89 | 3 |
-| `habermans_survival.mat` | 306 | 3 |
-| `instanbul_stock_exchange.mat` | 536 | 9 |
-| `iris.mat` | 150 | 4 |
-| `pima_indians_diabetes.mat` | 768 | 8 |
-| `ruspini.mat` | 75 | 2 |
-| `seeds.mat` | 221 | 7 |
-| `shuttle_test.mat` | 14500 | 8 |
-| `shuttle_train.mat` | 43500 | 8 |
-| `skin.mat` | 245057 | 3 |
-| `stone_flakes.mat` | 79 | 8 |
-| `user_knowledge_modeling_test.mat` | 145 | 5 |
-| `user_knowledge_modeling_train.mat` | 258 | 5 |
-| `vertebral_column_2C.mat` | 310 | 6 |
-| `vertebral_column_3C.mat` | 310 | 6 |
-| `wholesale_customers data.mat` | 440 | 6 |
-| `yeast.mat` | 1484 | 8 |
+| `data/abalone.mat` | 4177 | 7 |
+| `data/balance_scale.mat` | 625 | 4 |
+| `data/banknote_authentication.mat` | 1372 | 4 |
+| `data/blood_transfusion.mat` | 748 | 4 |
+| `data/ecoli.mat` | 336 | 7 |
+| `data/energy_efficiency.mat` | 768 | 8 |
+| `data/german_towns.mat` | 89 | 3 |
+| `data/habermans_survival.mat` | 306 | 3 |
+| `data/instanbul_stock_exchange.mat` | 536 | 9 |
+| `data/iris.mat` | 150 | 4 |
+| `data/pima_indians_diabetes.mat` | 768 | 8 |
+| `data/ruspini.mat` | 75 | 2 |
+| `data/seeds.mat` | 221 | 7 |
+| `data/shuttle_test.mat` | 14500 | 8 |
+| `data/shuttle_train.mat` | 43500 | 8 |
+| `data/skin.mat` | 245057 | 3 |
+| `data/stone_flakes.mat` | 79 | 8 |
+| `data/user_knowledge_modeling_test.mat` | 145 | 5 |
+| `data/user_knowledge_modeling_train.mat` | 258 | 5 |
+| `data/vertebral_column_2C.mat` | 310 | 6 |
+| `data/vertebral_column_3C.mat` | 310 | 6 |
+| `data/wholesale_customers data.mat` | 440 | 6 |
+| `data/yeast.mat` | 1484 | 8 |
 
 These datasets come from public sources such as the UCI Machine Learning
 Repository. They are redistributed here only as fixed inputs for
-`clustergallagher.m`.
+`clustergallagher`.
 
 ## Reusing this repository
 
+- **The repository is organized by platform**, so each language's code
+  and packaging live together: `matlab/` (MATLAB, plus the vendored
+  `bbob.v13.09/`) and `python/` (the `evobbo_instances` package and its
+  tests). `data/` holds the `.mat` files both platforms read, so there
+  is a single copy of the data.
 - **A Python port of the three instance-generating functions**
-  (`munozsmithmiles.m`, `langdonpoli.m`, `clustergallagher.m`) ships in
-  the `evobbo_instances` package, see [Usage](#usage) above. Its output
-  is checked against MATLAB reference values in `tests/`; see
-  [`PYTHON_PORT.md`](PYTHON_PORT.md) for how those reference values were
-  produced and what the port does and does not cover.
-- **Data files load in Python with no conversion.** Every `.mat` file
-  above is a MATLAB v5 file. Read it with
-  `scipy.io.loadmat('iris.mat')['data']`.
-- **`bbob.v13.09/` is a frozen 2011 snapshot** of the COCO benchmarking
-  platform, kept here only as a historical reference for the paper, and
-  is not ported. New work should use the [current COCO/BBOB
-  platform](https://github.com/numbbo/coco), which ships an official
-  Python interface.
+  (`matlab/munozsmithmiles.m`, `matlab/langdonpoli.m`,
+  `matlab/clustergallagher.m`) ships in `python/evobbo_instances/`, see
+  [Usage](#usage) above. Its output is checked against MATLAB reference
+  values in `python/tests/`; see [`PYTHON_PORT.md`](PYTHON_PORT.md) for
+  how those reference values were produced and what the port does and
+  does not cover.
+- **Data files load in Python with no conversion.** Every `.mat` file in
+  `data/` is a MATLAB v5 file. Read it with
+  `scipy.io.loadmat('data/iris.mat')['data']`.
+- **`matlab/bbob.v13.09/` is a frozen 2011 snapshot** of the COCO
+  benchmarking platform, kept here only as a historical reference for
+  the paper, and is not ported. New work should use the [current
+  COCO/BBOB platform](https://github.com/numbbo/coco), which ships an
+  official Python interface.
 
 ## Reproducibility
 

@@ -30,9 +30,10 @@ function Y = munozsmithmiles(X,sid,d,fid)
 % Output:
 %   Y       - a (N) vector of fitness values
 %
-% Must have the file 'munozsmithmiles.mat' to work. Must have square.m
-% and negexp.m on the MATLAB path: these are extra building-block
-% functions used by some of the generated expressions.
+% Must have the file '../data/munozsmithmiles.mat', relative to this
+% file, to work. Must have square.m and negexp.m on the MATLAB path:
+% these are extra building-block functions used by some of the
+% generated expressions.
 %
 % Version History:
 %     v1: 2019 | Original release.
@@ -46,6 +47,9 @@ function Y = munozsmithmiles(X,sid,d,fid)
 %                dimension between calls now reloads correctly, and
 %                added an explicit error for the 3 individuals (all in
 %                experiment s2d10) that carry no expression.
+%     v3: 2026 | Moved to matlab/; the data file now loads from
+%                ../data/munozsmithmiles.mat relative to this file
+%                instead of the MATLAB current directory.
 %
 
 
@@ -54,8 +58,10 @@ persistent evalstr cached_key
 key = ['s' num2str(sid) 'd' num2str(d)];
 
 if isempty(evalstr) || ~strcmp(cached_key, key)
+    this_dir = fileparts(mfilename('fullpath'));
+    mat_path = fullfile(this_dir, '..', 'data', 'munozsmithmiles.mat');
     try
-        load('munozsmithmiles.mat', key);
+        load(mat_path, key);
     catch ME
         disp('Either the strategy number or the dimension are incorrect.');
         disp('Choose an strategy number between 1 and 3 and a dimension equal to 2 or 10.');

@@ -60,7 +60,7 @@ def munozsmithmiles(X, sid, d, fid, data_dir=None):
             s1d2 <= 600, s1d10 <= 120, s2d2 <= 100, s2d10 <= 500,
             s3d2 <= 100, s3d10 <= 100.
         data_dir: directory containing munozsmithmiles.mat. Defaults to
-            the repository root.
+            the repository's data/ directory.
 
     Returns:
         A numpy array of shape (N,) with one fitness value per column

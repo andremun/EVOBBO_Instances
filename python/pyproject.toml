@@ -6,7 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "evobbo-instances"
 version = "0.1.0"
 description = "Python port of the EVOBBO_Instances continuous black-box optimization test instances"
-readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Mario Andres Munoz Acosta" }]
 requires-python = ">=3.9"
