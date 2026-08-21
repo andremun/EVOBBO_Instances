@@ -50,11 +50,14 @@ EVOBBO_Instances/
 │   ├── clustergallagher.m    # clustering-based instances (source 4 above)
 │   ├── square.m, negexp.m    # helper functions used by munozsmithmiles.m
 │   └── bbob.v13.09/          # reference COCO/BBOB v13.09 platform
+│                              # (own Simplified BSD license, see below)
 ├── python/
 │   ├── evobbo_instances/     # Python port of the 3 functions above
 │   ├── tests/                # Python test suite, checked against MATLAB
 │   └── pyproject.toml, requirements.txt
-├── LICENSE                  # MIT license for the code in this repository
+├── LICENSE                  # MIT license for this repository's own code
+│                             # (matlab/bbob.v13.09/ is vendored under its
+│                             # own license, matlab/bbob.v13.09/LICENSE.txt)
 └── .github/ISSUE_TEMPLATE/  # bug report and feature request templates
 ```
 
