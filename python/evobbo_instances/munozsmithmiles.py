@@ -12,13 +12,11 @@ all. Validated against MATLAB reference output in
 tests/test_munozsmithmiles.py.
 """
 
-from pathlib import Path
-
 import numpy as np
 from scipy.io import loadmat
 
 from ._expr import ExpressionError, evaluate_expression
-from ._paths import DEFAULT_DATA_DIR
+from ._paths import resolve_data_dir
 
 _VALID_SID = (1, 2, 3)
 _VALID_D = (2, 10)
@@ -41,7 +39,13 @@ def _load_expressions(sid, d, data_dir):
                 "equal to 2 or 10."
             )
         var_name = f"s{sid}d{d}"
-        mat_path = Path(data_dir) / "munozsmithmiles.mat"
+        mat_path = data_dir / "munozsmithmiles.mat"
+        if not mat_path.is_file():
+            raise FileNotFoundError(
+                f"munozsmithmiles.mat not found in {data_dir}. Pass "
+                "data_dir explicitly if this package is not running from "
+                "a source checkout of the EVOBBO_Instances repository."
+            )
         mat = loadmat(mat_path, variable_names=[var_name], squeeze_me=True)
         raw = mat[var_name]
         exprs = [e.decode() if isinstance(e, bytes) else str(e) for e in np.atleast_1d(raw)]
@@ -67,12 +71,16 @@ def munozsmithmiles(X, sid, d, fid, data_dir=None):
         of X.
 
     Raises:
+        FileNotFoundError: if data_dir (or its default, the repository's
+            data/ directory) does not exist or does not contain
+            munozsmithmiles.mat. The default only resolves correctly
+            when this package runs from a source checkout of the
+            repository; pass data_dir explicitly otherwise.
         ValueError: if sid, d, or fid is out of range.
         ExpressionError: if the requested individual has no expression
             (a small number of individuals, all in s2d10, are empty).
     """
-    if data_dir is None:
-        data_dir = DEFAULT_DATA_DIR
+    data_dir = resolve_data_dir(data_dir)
     X = np.asarray(X, dtype=float)
     if X.ndim != 2 or X.shape[0] != d:
         raise ValueError(f"X must have shape ({d}, N) to match d={d}, got {X.shape}")

@@ -1,13 +1,20 @@
 """Python port of clustergallagher.m.
 
-Vectorized fitness function following M. Gallagher, "Towards improved
-benchmarking of black-box optimization algorithms using clustering
-problems", Soft Comput. 20(10) 3835-3849, 2016.
+Fitness function following M. Gallagher, "Towards improved benchmarking
+of black-box optimization algorithms using clustering problems", Soft
+Comput. 20(10) 3835-3849, 2016.
 
 Ported from the MATLAB source, replacing the embedded L2_distance helper
 (there credited to Roland Bunschoten and Laurens van der Maaten) with the
-equivalent scipy.spatial.distance.cdist. Validated against MATLAB
-reference output in tests/test_clustergallagher.py.
+equivalent scipy.spatial.distance.cdist. Like the MATLAB source, this
+loops over the N candidate solutions one at a time rather than
+vectorizing across all of them: clustergallagher.m's own version history
+notes that an earlier, fully vectorized version (arrayfun over N) was
+deliberately replaced with this per-candidate loop for speed and memory
+reasons, since a full N-way vectorization would need one (k, n) distance
+matrix per candidate held in memory at once. The per-candidate distance
+computation itself is vectorized, through cdist. Validated against
+MATLAB reference output in tests/test_clustergallagher.py.
 """
 
 import numpy as np

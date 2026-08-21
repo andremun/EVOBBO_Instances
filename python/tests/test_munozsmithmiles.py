@@ -77,3 +77,8 @@ def test_invalid_strategy_raises():
 def test_mismatched_dimension_raises():
     with pytest.raises(ValueError):
         munozsmithmiles(X10, 1, 2, 1)  # X10 has 10 rows, d=2 expects 2
+
+
+def test_missing_data_dir_raises_file_not_found():
+    with pytest.raises(FileNotFoundError):
+        munozsmithmiles(X2, 1, 2, 1, data_dir="/no/such/directory")

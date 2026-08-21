@@ -29,7 +29,9 @@ The repository provides instances from four sources:
    `matlab/clustergallagher.m`, evaluated over the clustering datasets in
    this repository (see [Datasets](#datasets) below).
 
-Every function above has a Python equivalent, see [Usage](#usage) below.
+Sources 1, 3, and 4 above each have a Python equivalent, see
+[Usage](#usage) below. Source 2, the vendored BBOB v13.09 platform, is
+not ported; see [Reusing this repository](#reusing-this-repository).
 
 ## Contents
 
