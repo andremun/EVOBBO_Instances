@@ -11,7 +11,9 @@ Evol. Comput., 2019.
 The repository provides instances from four sources:
 
 1. **Generated instances** from the methodology in the paper above, through
-   the function `munozsmithmiles.m`.
+   the function `munozsmithmiles.m` (needs `square.m` and `negexp.m`,
+   also in this repository; see that function's version history for two
+   bugs fixed in 2026 that made every call fail before the fix).
 2. **Reference BBOB instances** from the "Comparing Continuous Optimization"
    benchmarking platform v13.09 (2011), in `bbob.v13.09/`. Use the
    [current COCO/BBOB platform](https://github.com/numbbo/coco) for new
@@ -31,37 +33,59 @@ The repository provides instances from four sources:
 
 ```
 EVOBBO_Instances/
-├── munozsmithmiles.m      # generated BBO instances (see source 1 above)
-├── munozsmithmiles.mat    # instance definitions used by munozsmithmiles.m
-├── langdonpoli.m           # Langdon and Poli instances (source 3 above)
-├── clustergallagher.m      # clustering-based instances (source 4 above)
-├── *.mat                   # clustering datasets used by clustergallagher.m
-│                            # (see Datasets below; excludes munozsmithmiles.mat)
-├── bbob.v13.09/            # reference COCO/BBOB v13.09 platform (MATLAB)
-├── LICENSE                 # MIT license for the code in this repository
-└── .github/ISSUE_TEMPLATE/ # bug report and feature request templates
+├── munozsmithmiles.m       # generated BBO instances (see source 1 above)
+├── munozsmithmiles.mat     # instance definitions used by munozsmithmiles.m
+├── langdonpoli.m            # Langdon and Poli instances (source 3 above)
+├── clustergallagher.m       # clustering-based instances (source 4 above)
+├── square.m, negexp.m       # helper functions used by munozsmithmiles.m
+├── *.mat                    # clustering datasets used by clustergallagher.m
+│                             # (see Datasets below; excludes munozsmithmiles.mat)
+├── bbob.v13.09/             # reference COCO/BBOB v13.09 platform (MATLAB)
+├── evobbo_instances/        # Python port of the 3 functions above
+├── tests/                   # Python test suite, checked against MATLAB
+├── pyproject.toml, requirements.txt  # Python packaging
+├── LICENSE                  # MIT license for the code in this repository
+└── .github/ISSUE_TEMPLATE/  # bug report and feature request templates
 ```
 
 ## Installation
 
-The code needs a current version of [MATLAB](https://www.mathworks.com).
-It has been tested on r2018b, and should work on earlier versions too.
-Most functions are vectorized, so they run fast under MATLAB.
+### MATLAB
 
-No toolbox beyond base MATLAB is required.
+The MATLAB code needs a current version of
+[MATLAB](https://www.mathworks.com). It has been tested on r2018b, and
+should work on earlier versions too. Most functions are vectorized, so
+they run fast under MATLAB. No toolbox beyond base MATLAB is required.
+
+### Python
+
+The Python port needs Python 3.9 or later. From the repository root:
+
+```bash
+pip install -e .
+```
+
+This installs the `evobbo_instances` package and its two dependencies,
+`numpy` and `scipy`. Run `pip install -e ".[test]"` instead to also get
+`pytest`, and run the test suite with `pytest tests/`.
 
 ## Usage
 
 Each function takes a matrix of candidate solutions `X` and returns a
-vector of fitness values `Y`. Full argument details are in the header
-comment of each file.
+vector of fitness values `Y`. Full argument details are in the MATLAB
+header comment or the Python docstring of each function.
 
-### Generated instances (`munozsmithmiles.m`)
+### Generated instances (`munozsmithmiles.m` / `munozsmithmiles.py`)
 
 ```matlab
 % X is a (d x N) matrix of candidate solutions.
 % sid: strategy id (1-3). d: dimension (2 or 10). fid: function id.
 Y = munozsmithmiles(X, sid, d, fid);
+```
+
+```python
+from evobbo_instances import munozsmithmiles
+Y = munozsmithmiles(X, sid, d, fid)  # X: numpy array, shape (d, N)
 ```
 
 The valid range of `fid` depends on `sid` and `d`:
@@ -75,9 +99,14 @@ The valid range of `fid` depends on `sid` and `d`:
 | `s3d2`  | 100 |
 | `s3d10` | 100 |
 
-This function needs `munozsmithmiles.mat` in the MATLAB path.
+3 individuals (`s2d10` `fid` 2, 41, and 54) carry no expression. Both the
+MATLAB and Python functions raise a clear error for these, rather than
+returning a silently wrong value.
 
-### Langdon and Poli instances (`langdonpoli.m`)
+This function needs `munozsmithmiles.mat` (MATLAB: on the MATLAB path;
+Python: in `data_dir`, which defaults to the repository root).
+
+### Langdon and Poli instances (`langdonpoli.m` / `langdonpoli.py`)
 
 ```matlab
 % X is a (d x N) matrix of candidate solutions in [-5, 5]^2.
@@ -85,7 +114,12 @@ This function needs `munozsmithmiles.mat` in the MATLAB path.
 Y = langdonpoli(X, fid);
 ```
 
-### Clustering-based instances (`clustergallagher.m`)
+```python
+from evobbo_instances import langdonpoli
+Y = langdonpoli(X, fid)  # X: numpy array, shape (2, N)
+```
+
+### Clustering-based instances (`clustergallagher.m` / `clustergallagher.py`)
 
 ```matlab
 % X is a (k*p x N) matrix of candidate solutions, where each column
@@ -95,6 +129,13 @@ Y = langdonpoli(X, fid);
 % variable stored in each .mat file listed in Datasets below.
 load('iris.mat');           % loads variable `data`, shape (150 x 4)
 Y = clustergallagher(X, data');
+```
+
+```python
+from evobbo_instances import clustergallagher
+from scipy.io import loadmat
+data = loadmat('iris.mat')['data']       # shape (150, 4) = (n, p)
+Y = clustergallagher(X, data.T)          # dataset: shape (p, n)
 ```
 
 ## Datasets
@@ -135,18 +176,20 @@ Repository. They are redistributed here only as fixed inputs for
 
 ## Reusing this repository
 
-- **Data files load in Python.** Every `.mat` file above is a MATLAB v5
-  file. Read it with `scipy.io.loadmat('iris.mat')['data']` with no
-  conversion step.
+- **A Python port of the three instance-generating functions**
+  (`munozsmithmiles.m`, `langdonpoli.m`, `clustergallagher.m`) ships in
+  the `evobbo_instances` package, see [Usage](#usage) above. Its output
+  is checked against MATLAB reference values in `tests/`; see
+  [`PYTHON_PORT.md`](PYTHON_PORT.md) for how those reference values were
+  produced and what the port does and does not cover.
+- **Data files load in Python with no conversion.** Every `.mat` file
+  above is a MATLAB v5 file. Read it with
+  `scipy.io.loadmat('iris.mat')['data']`.
 - **`bbob.v13.09/` is a frozen 2011 snapshot** of the COCO benchmarking
-  platform, kept here only as a historical reference for the paper. New
-  work should use the [current COCO/BBOB platform](https://github.com/numbbo/coco),
-  which ships an official Python interface.
-- **A Python port of the three instance-generating functions
-  (`munozsmithmiles.m`, `langdonpoli.m`, `clustergallagher.m`) is
-  feasible** and is scoped in [`PYTHON_PORT.md`](PYTHON_PORT.md), with a
-  per-function effort estimate and a proposed package layout. No port
-  exists yet in this repository.
+  platform, kept here only as a historical reference for the paper, and
+  is not ported. New work should use the [current COCO/BBOB
+  platform](https://github.com/numbbo/coco), which ships an official
+  Python interface.
 
 ## Reproducibility
 

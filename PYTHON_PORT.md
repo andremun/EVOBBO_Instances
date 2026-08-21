@@ -1,119 +1,95 @@
-# Python port: feasibility assessment
+# Python port
 
-This document scopes a Python port of this repository. It records what a
-port needs, per file, and an effort estimate. No Python code exists yet in
-this repository. This is a planning document, not an implementation.
+This document records what the Python port (the `evobbo_instances`
+package) covers, how its output was checked against MATLAB, and what a
+MATLAB bug fix had to happen first to make that check possible.
 
-## Summary
+## Status
 
-A Python port of the three instance-generating functions is low effort,
-roughly 2-3 days for one developer, including tests. The data files need
-no conversion. The `bbob.v13.09/` folder should not be ported. See
-[Recommendation](#recommendation).
+Implemented: `clustergallagher`, `langdonpoli`, `munozsmithmiles`.
+Not ported: `bbob.v13.09/` (see [Recommendation](#recommendation)).
 
-| File | Port effort | Why |
+| File | Port status | Notes |
 |---|---|---|
-| `*.mat` data files | None | `scipy.io.loadmat` reads them directly. |
-| `clustergallagher.m` | Low (a few hours) | Standard vectorized distance computation, direct `numpy`/`scipy.spatial` equivalent. |
-| `langdonpoli.m` | Low (a few hours) | A fixed list of 19 closed-form polynomial and trigonometric functions. Direct line-by-line translation. |
-| `munozsmithmiles.m` | Medium (1-2 days) | Needs a small expression transpiler (see below). The hard part of this port. |
-| `bbob.v13.09/` | Not recommended | Superseded by the official [COCO/BBOB platform](https://github.com/numbbo/coco), which already ships a Python interface. |
+| `*.mat` data files | No conversion needed | `scipy.io.loadmat` reads them directly. |
+| `clustergallagher.m` | Ported, `evobbo_instances/clustergallagher.py` | Uses `scipy.spatial.distance.cdist` in place of the embedded `L2_distance` helper. |
+| `langdonpoli.m` | Ported, `evobbo_instances/langdonpoli.py` | Direct line-by-line translation of the 19 closed-form functions. |
+| `munozsmithmiles.m` | Ported, `evobbo_instances/munozsmithmiles.py` | Needed a small expression parser, see below. |
+| `bbob.v13.09/` | Not ported | Superseded by the official [COCO/BBOB platform](https://github.com/numbbo/coco), which already ships a Python interface. |
 
-## Per-file detail
+## A MATLAB bug had to be fixed first
 
-### `clustergallagher.m`
+Porting `munozsmithmiles.m` meant generating known-correct MATLAB output
+to check the Python port against. Doing that surfaced two bugs in the
+shipped function that made every call fail:
 
-Reshapes `X` into `k` candidate cluster centers of dimensionality `p`,
-computes the pairwise Euclidean distance between each dataset point and
-each candidate center, and sums the squared distance to the nearest
-center. This maps directly onto `scipy.spatial.distance.cdist` inside a
-loop over the `N` candidate solutions, or a vectorized `numpy` broadcast.
-The embedded `L2_distance` helper (credited to Roland Bunschoten and
-Laurens van der Maaten, for non-commercial use, see the file header) is
-replaced outright by `scipy.spatial.distance.cdist`, which computes the
-same quantity. No behavior needs to be reproduced by hand.
+1. The cache check was `if isempty('evalstr')`, testing the 7-character
+   string literal `'evalstr'` (never empty) instead of the variable
+   `evalstr` (empty on the first call). The cached branch that loads
+   `munozsmithmiles.mat` and reads the expression list never ran.
+2. Because of bug 1, `evalstr` stayed empty, and
+   `Y = feval(evalstr{fid}, X')` tried to index an empty value with
+   `{fid}`, which MATLAB and Octave both reject.
+3. Even with bug 1 fixed, `feval` on the stored value does not work
+   either: each stored individual is a `char` expression string (for
+   example `"plus(X(1,:),X(2,:))"`), not a function handle, and `feval`
+   needs a function name or handle, not an arbitrary expression. The
+   fix is `eval`, not `feval`.
+4. Two functions the stored expressions call, `square` and `negexp`,
+   are not MATLAB or Octave built-ins and were not included anywhere in
+   this repository. They are standard building-block names from the
+   genetic programming toolbox (GPTIPS) that generated these
+   expressions: `square(x) = x.^2`, `negexp(x) = exp(-x)`. Both are now
+   in this repository as `square.m` and `negexp.m`.
 
-### `langdonpoli.m`
+`munozsmithmiles.m` in this repository now has all four fixes (see its
+version history comment), plus a caching fix: the original cache also
+never reloaded when `sid` or `d` changed between calls, silently
+reusing the wrong expression list. This is fixed by keying the cache on
+`(sid, d)`. `square.m` and `negexp.m` were added alongside it. A small
+number of individuals (`s2d10` `fid` 2, 41, and 54) are stored as an
+empty value rather than an expression; both `munozsmithmiles.m` and
+`munozsmithmiles.py` now raise a clear error for these instead of
+silently producing a wrong-shaped or wrong-valued result.
 
-A literal MATLAB cell array of 19 anonymous functions, each a short
-polynomial or trigonometric expression in two variables. Each one
-translates to a Python `lambda` or a plain function using `numpy`
-elementwise operations. The bound check (`Y = 0` where `|X| > 10`) also
-translates directly with `numpy.where`.
+## The `munozsmithmiles.mat` expression grammar
 
-### `munozsmithmiles.m`
+Every one of the 1520 stored expressions uses only:
 
-`munozsmithmiles.mat` stores 1520 instance definitions as MATLAB
-expression strings, evaluated at run time through MATLAB's `eval`. For
-example:
+- The binary functions `plus`, `minus`, `times`
+- The unary functions `exp`, `negexp`, `cos`, `sin`, `square`, `tanh`
+- Row indexing, `X(1,:)`, `X(2,:)`, ... up to the instance's dimension
+- Numeric literals in brackets, for example `[-10.4887]`
 
-```
-plus(plus(minus(...),X(1,:)),plus(tanh(...),...))
-```
+`evobbo_instances/_expr.py` parses this grammar with a small
+hand-written tokenizer and recursive-descent parser, then evaluates the
+parsed tree with `numpy`. It never calls Python's `eval()` on the
+stored strings: a parser that only recognizes this fixed grammar cannot
+execute anything else, which a regex-substitution-plus-`eval()`
+approach could not guarantee as cleanly.
 
-Every expression in the file uses only the following building blocks:
+## Validation
 
-- Arithmetic: `plus`, `minus`, `times`
-- Elementwise functions: `exp`, `negexp`, `cos`, `sin`, `square`, `tanh`
-- Indexing: `X(1,:)`, `X(2,:)`
-- Numeric literals in brackets: `[-10.4887]`
-- The empty expression `[]` (a small number of instances are empty and
-  should evaluate to a constant or be filtered out)
+No MATLAB license was available in the environment this port was built
+in. Reference output instead came from GNU Octave 8.4.0, which runs all
+three functions unmodified (none uses a toolbox or a MATLAB-specific
+language feature). `tests/generate_fixtures.m` is the checked-in script
+that produces `tests/fixtures/*.csv` from fixed, deterministic inputs
+(not random numbers, so the fixtures do not depend on the RNG
+implementation of whichever MATLAB-compatible environment runs them).
+`tests/test_*.py` load those fixtures and check every value against the
+Python port's output, plus the error cases (out-of-range `fid`, invalid
+`sid`, mismatched `X` shape, the 3 empty `munozsmithmiles` individuals).
+All 287 checks pass as of this port.
 
-A Python port needs a small parser or transpiler for this grammar, not a
-full MATLAB interpreter. Two viable approaches:
-
-1. **Recursive-descent parser.** Parse the string into an expression
-   tree, then evaluate it with `numpy` functions
-   (`numpy.exp`, `numpy.cos`, `numpy.sin`, `numpy.tanh`, `X[0, :]`,
-   `X[1, :]`, and `numpy.square` for `square`, plus `negexp(x) =
-   numpy.exp(-x)`). This is the recommended approach: it never calls
-   `eval` on the stored strings.
-2. **Regex substitution into a Python expression, then `eval`.** Faster
-   to write, but calls `eval` on parsed file content. Because the
-   `.mat` file ships in this repository and is not user input, the risk
-   is low, but a parser (option 1) removes the risk entirely and should
-   be preferred for a public package.
-
-`scipy.io.loadmat(..., squeeze_me=True)` reads the string array
-(`s1d2`, `s1d10`, `s2d2`, `s2d10`, `s3d2`, `s3d10`) directly, with no
-extra conversion of the `.mat` file needed.
-
-### `bbob.v13.09/`
-
-This is a vendored copy of the COCO/BBOB v13.09 MATLAB platform from
-2011, kept only as a historical reference (the file `benchmarks.m`
-implements the original 24 noiseless BBOB functions). The current
-[COCO/BBOB platform](https://github.com/numbbo/coco) already ships an
-official, maintained Python interface (the `cocoex` package). Porting
-this folder would duplicate that maintained implementation. See
-[Recommendation](#recommendation).
+**Re-validate with real MATLAB when available**: re-run
+`tests/generate_fixtures.m` in MATLAB and re-run `pytest tests/`. A
+difference would point to a real Octave/MATLAB behavior gap in one of
+these three functions; none is expected, since they use only core
+array arithmetic, but this has not been directly confirmed against
+MathWorks MATLAB.
 
 ## Recommendation
 
-Port `clustergallagher.m`, `langdonpoli.m`, and `munozsmithmiles.m` into a
-small `evobbo_instances` Python package:
-
-```
-evobbo_instances/
-├── __init__.py
-├── clustergallagher.py
-├── langdonpoli.py
-├── munozsmithmiles.py       # expression parser and evaluator
-├── data/                     # the existing .mat files, unchanged
-tests/
-├── test_clustergallagher.py  # compare against MATLAB reference output
-├── test_langdonpoli.py
-└── test_munozsmithmiles.py
-requirements.txt              # numpy, scipy
-```
-
 Do not port `bbob.v13.09/`. Point users to the official COCO/BBOB Python
 package instead, as the main README already does.
-
-For every ported function, validate the Python output against fixed
-MATLAB reference output (a small CSV per function, generated once from
-MATLAB and checked into `tests/`), following the cross-language
-validation pattern used elsewhere in this research program: record which
-commit of the MATLAB code generated each fixture, so a future MATLAB
-change does not silently invalidate the fixture.

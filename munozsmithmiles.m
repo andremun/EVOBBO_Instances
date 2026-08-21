@@ -30,31 +30,54 @@ function Y = munozsmithmiles(X,sid,d,fid)
 % Output:
 %   Y       - a (N) vector of fitness values
 %
-% Must have the file 'munozsmithmiles.mat' to work.
-% 
+% Must have the file 'munozsmithmiles.mat' to work. Must have square.m
+% and negexp.m on the MATLAB path: these are extra building-block
+% functions used by some of the generated expressions.
+%
+% Version History:
+%     v1: 2019 | Original release.
+%     v2: 2026 | Fixed two bugs that made every call fail: the cache
+%                check tested the string literal 'evalstr' instead of
+%                the variable evalstr, so the .mat file was never
+%                loaded, and the expression was evaluated with feval on
+%                a string (which needs a function name, not an
+%                expression) instead of eval. Also fixed the cache key
+%                to include sid and d, so switching strategy or
+%                dimension between calls now reloads correctly, and
+%                added an explicit error for the 3 individuals (all in
+%                experiment s2d10) that carry no expression.
+%
 
 
-global evalstr
+persistent evalstr cached_key
 
-if isempty('evalstr')
+key = ['s' num2str(sid) 'd' num2str(d)];
+
+if isempty(evalstr) || ~strcmp(cached_key, key)
     try
-        load('munozsmithmiles.mat',['s' num2str(sid) 'd' num2str(d)]);
+        load('munozsmithmiles.mat', key);
     catch ME
         disp('Either the strategy number or the dimension are incorrect.');
         disp('Choose an strategy number between 1 and 3 and a dimension equal to 2 or 10.');
-        rethrow ME;
+        rethrow(ME);
     end
 
-    evalstr = eval(['s' num2str(sid) 'd' num2str(d)]);
-    nfunc = length(evalstr);
-    
-    if fid>nfunc
-        error(['The function index ' num2str(fid) ' is incorrect, there are ' ...
-                num2str(nfunc) ' functions in experiment s' num2str(sid) 'd' num2str(d)]);
-    end
+    evalstr = eval(key);
+    cached_key = key;
 end
 
-Y = feval(evalstr{fid},X');
+nfunc = length(evalstr);
+if fid>nfunc
+    error(['The function index ' num2str(fid) ' is incorrect, there are ' ...
+            num2str(nfunc) ' functions in experiment ' key]);
+end
+
+expr = evalstr{fid};
+if ~ischar(expr) || isempty(strtrim(expr)) || strcmp(strtrim(expr), '[]')
+    error(['Function ' num2str(fid) ' in experiment ' key ' has no expression (empty individual).']);
+end
+
+Y = eval(expr);
 
 end
 

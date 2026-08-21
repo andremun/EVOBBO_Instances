@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evobbo-instances"
+version = "0.1.0"
+description = "Python port of the EVOBBO_Instances continuous black-box optimization test instances"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Mario Andres Munoz Acosta" }]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+[project.urls]
+Repository = "https://github.com/andremun/EVOBBO_Instances"
+
+[tool.setuptools.packages.find]
+include = ["evobbo_instances*"]
