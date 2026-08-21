@@ -1,0 +1,27 @@
+cff-version: 1.2.0
+message: >-
+  If you use this repository, cite it as below, and cite the paper that
+  matches the instance source you use (see README.md for the full list).
+title: Evolved BBO Instances
+type: software
+authors:
+  - given-names: Mario Andres
+    family-names: Munoz Acosta
+    affiliation: University of Melbourne
+license: MIT
+repository-code: https://github.com/andremun/EVOBBO_Instances
+preferred-citation:
+  type: article
+  title: >-
+    Generating New Space-Filling Test Instances for Continuous
+    Black-Box Optimization
+  authors:
+    - given-names: Mario Andres
+      family-names: Munoz Acosta
+      affiliation: University of Melbourne
+    - given-names: Kate
+      family-names: Smith-Miles
+      affiliation: University of Melbourne
+  journal: Evolutionary Computation
+  year: 2019
+  doi: 10.1162/evco_a_00262
