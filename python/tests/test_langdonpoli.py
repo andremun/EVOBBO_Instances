@@ -13,7 +13,7 @@ import pytest
 
 from evobbo_instances import langdonpoli
 
-FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures"
 
 # Same fixed input grid as tests/generate_fixtures.m.
 X = np.array(

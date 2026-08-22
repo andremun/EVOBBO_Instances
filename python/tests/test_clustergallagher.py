@@ -14,7 +14,7 @@ from scipy.io import loadmat
 from evobbo_instances import clustergallagher
 from evobbo_instances._paths import DEFAULT_DATA_DIR
 
-FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures"
 
 # Same fixed input as tests/generate_fixtures.m: 2 candidates, k=3
 # clusters, p=4 (iris has 4 features).

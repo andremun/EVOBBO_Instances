@@ -74,26 +74,32 @@ approach could not guarantee as cleanly.
 
 ## Validation
 
-No MATLAB license was available in the environment this port was built
-in. Reference output instead came from GNU Octave 8.4.0, which runs all
-three functions unmodified (none uses a toolbox or a MATLAB-specific
-language feature). `python/tests/generate_fixtures.m` is the checked-in
-script that produces `python/tests/fixtures/*.csv` from fixed,
+The fixtures were first produced without a MATLAB license, using GNU
+Octave 8.4.0 (none of the three ported functions uses a toolbox or a
+MATLAB-specific language feature, so Octave runs them unmodified).
+`tests/generate_fixtures.m` is the checked-in script that produces
+`tests/fixtures/*.csv` from `tests/fixtureInputs.m`'s fixed,
 deterministic inputs (not random numbers, so the fixtures do not depend
 on the RNG implementation of whichever MATLAB-compatible environment
-runs them); it resolves `matlab/` and `data/` relative to its own
-location, so it can be run from anywhere. `python/tests/test_*.py` load
+runs them); both scripts resolve `matlab/` and `data/` relative to their
+own location, so they run from anywhere. `python/tests/test_*.py` load
 those fixtures and check every value against the Python port's output,
 plus the error cases (out-of-range `fid`, invalid `sid`, mismatched `X`
-shape, the 3 empty `munozsmithmiles` individuals). All 287 checks pass
-as of this port.
+shape, the 3 empty `munozsmithmiles` individuals). 288 checks pass as of
+this port.
 
-**Re-validate with real MATLAB when available**: re-run
-`python/tests/generate_fixtures.m` in MATLAB and re-run `pytest tests/`
-from `python/`. A difference would point to a real Octave/MATLAB
-behavior gap in one of these three functions; none is expected, since
-they use only core array arithmetic, but this has not been directly
-confirmed against MathWorks MATLAB.
+**Re-validated continuously against real MATLAB.** `matlab/tests/`
+(`matlab.unittest.TestCase` classes, run by
+`.github/workflows/matlab-tests.yml` on every push and pull request)
+re-runs `matlab/munozsmithmiles.m`, `matlab/langdonpoli.m`, and
+`matlab/clustergallagher.m` on real MATLAB against the same
+`tests/fixtures/*.csv` the Python tests check. This closes what was
+previously an open caveat here: whether Octave and real MATLAB agree on
+these three functions is no longer a "not yet confirmed" note, it is
+checked on every commit. If MATLAB CI and the committed fixtures ever
+disagree, regenerate the fixtures from MATLAB (not Octave) and treat any
+resulting diff as a genuine Octave/MATLAB behavior gap to investigate,
+not as noise to paper over.
 
 ## Recommendation
 

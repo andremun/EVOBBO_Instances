@@ -1,6 +1,7 @@
 # Evolved BBO Instances
 
 [![DOI](https://zenodo.org/badge/198110974.svg)](https://zenodo.org/badge/latestdoi/198110974)
+[![MATLAB tests](https://github.com/andremun/EVOBBO_Instances/actions/workflows/matlab-tests.yml/badge.svg)](https://github.com/andremun/EVOBBO_Instances/actions/workflows/matlab-tests.yml)
 
 This repository holds test instances and datasets for continuous
 black-box optimization (BBO) research. It supports the paper M.A. Muñoz
@@ -49,16 +50,23 @@ EVOBBO_Instances/
 │   ├── langdonpoli.m         # Langdon and Poli instances (source 3 above)
 │   ├── clustergallagher.m    # clustering-based instances (source 4 above)
 │   ├── square.m, negexp.m    # helper functions used by munozsmithmiles.m
+│   ├── tests/                # matlab.unittest suite, run in CI (below)
 │   └── bbob.v13.09/          # reference COCO/BBOB v13.09 platform
 │                              # (own Simplified BSD license, see below)
 ├── python/
 │   ├── evobbo_instances/     # Python port of the 3 functions above
-│   ├── tests/                # Python test suite, checked against MATLAB
+│   ├── tests/                # pytest suite, checked against tests/fixtures/
 │   └── pyproject.toml, requirements.txt
+├── tests/                   # fixtures shared by both test suites above
+│   ├── fixtureInputs.m      # candidate solutions both suites evaluate
+│   ├── generate_fixtures.m  # (re)writes fixtures/*.csv from fixtureInputs.m
+│   └── fixtures/*.csv       # committed MATLAB reference output
 ├── LICENSE                  # MIT license for this repository's own code
 │                             # (matlab/bbob.v13.09/ is vendored under its
 │                             # own license, matlab/bbob.v13.09/LICENSE.txt)
-└── .github/ISSUE_TEMPLATE/  # bug report and feature request templates
+└── .github/
+    ├── workflows/matlab-tests.yml  # runs matlab/tests/ on push/PR
+    └── ISSUE_TEMPLATE/             # bug report and feature request templates
 ```
 
 ## Installation
@@ -74,6 +82,11 @@ Add `matlab/` to the MATLAB path before calling any function:
 ```matlab
 addpath('matlab');
 ```
+
+To run the MATLAB test suite locally: `run('matlab/tests/run_tests.m')` from
+the repository root, or any directory (it resolves its own paths).
+[GitHub Actions](.github/workflows/matlab-tests.yml) runs the same suite
+on every push and pull request, against real MATLAB.
 
 ### Python
 
@@ -206,10 +219,11 @@ Repository. They are redistributed here only as fixed inputs for
 - **A Python port of the three instance-generating functions**
   (`matlab/munozsmithmiles.m`, `matlab/langdonpoli.m`,
   `matlab/clustergallagher.m`) ships in `python/evobbo_instances/`, see
-  [Usage](#usage) above. Its output is checked against MATLAB reference
-  values in `python/tests/`; see [`PYTHON_PORT.md`](PYTHON_PORT.md) for
-  how those reference values were produced and what the port does and
-  does not cover.
+  [Usage](#usage) above. Its output is checked in `python/tests/` against
+  the same reference values in `tests/fixtures/` that `matlab/tests/`
+  checks the MATLAB source against, on every CI run, on real MATLAB. See
+  [`PYTHON_PORT.md`](PYTHON_PORT.md) for how those reference values were
+  produced and what the port does and does not cover.
 - **Data files load in Python with no conversion.** Every `.mat` file in
   `data/` is a MATLAB v5 file. Read it with
   `scipy.io.loadmat('data/iris.mat')['data']`.
