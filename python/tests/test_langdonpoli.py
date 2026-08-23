@@ -47,3 +47,8 @@ def test_out_of_domain_is_zeroed():
     # 2 * 6.0 = 12.0 > 10, so this sample should be forced to 0.
     Y = langdonpoli(X, 1)
     assert Y[0] == 0.0
+
+
+def test_wrong_row_count_raises():
+    with pytest.raises(ValueError):
+        langdonpoli(X[:1, :], 1)  # 1 row; langdonpoli needs exactly 2

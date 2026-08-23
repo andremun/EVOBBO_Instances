@@ -61,6 +61,18 @@ methods (Test)
         Y = langdonpoli(testCase.X, 1);
         testCase.verifyEqual(Y(1), 0);
     end
+
+    function testWrongRowCountErrors(testCase)
+        % langdonpoli.m needs exactly 2 rows; this repo's functions are
+        % defined in 2 dimensions only.
+        badX = testCase.X(1, :);
+        try
+            langdonpoli(badX, 1);
+            testCase.verifyFail('Expected an error for X not having exactly 2 rows.');
+        catch
+            % Expected.
+        end
+    end
 end
 
 end

@@ -17,4 +17,4 @@ from .langdonpoli import langdonpoli
 from .munozsmithmiles import munozsmithmiles
 
 __all__ = ["clustergallagher", "langdonpoli", "munozsmithmiles"]
-__version__ = "0.1.0"
+__version__ = "0.2.0"  # 0.2.0: clustergallagher's dataset argument is now (n, p), was (p, n)

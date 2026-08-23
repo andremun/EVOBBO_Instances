@@ -50,8 +50,18 @@ function Y = munozsmithmiles(X,sid,d,fid)
 %     v3: 2026 | Moved to matlab/; the data file now loads from
 %                ../data/munozsmithmiles.mat relative to this file
 %                instead of the MATLAB current directory.
+%     v4: 2026 | Added a guard for X not having exactly d rows. Before
+%                this, passing X with more than d rows silently used
+%                only the first d and ignored the rest; passing fewer
+%                rows than d threw a confusing "index exceeds matrix
+%                dimensions" error instead of naming the actual problem.
 %
 
+
+if size(X,1) ~= d
+    error(['X has ' num2str(size(X,1)) ' rows, expected exactly d = ' ...
+            num2str(d) ' rows (one per dimension, one column per candidate solution).']);
+end
 
 persistent evalstr cached_key
 

@@ -28,7 +28,7 @@ methods (TestClassSetup)
         addpath(fullfile(repoRoot, 'tests'));
         testCase.X = fixtureInputs().ClusterGallagherX;
         irisData = load(fullfile(repoRoot, 'data', 'iris.mat'));
-        testCase.Dataset = irisData.data';  % (p x n) = (4 x 150)
+        testCase.Dataset = irisData.data;  % (n x p) = (150 x 4), native orientation
         testCase.Fixture = readtable(fullfile(repoRoot, 'tests', 'fixtures', 'clustergallagher.csv'));
     end
 end
@@ -43,8 +43,8 @@ methods (Test)
 
     function testMismatchedDimensionalityErrors(testCase)
         % X has 12 rows (k=3, p=4). Dropping one row leaves 11, not a
-        % multiple of the dataset's p=4, so reshape(X, p, k, N) inside
-        % clustergallagher.m errors on the non-integer k = 11/4.
+        % multiple of the dataset's p=4, so clustergallagher.m's
+        % mod(kp,p) guard errors explicitly.
         badX = testCase.X(1:end-1, :);
         try
             clustergallagher(badX, testCase.Dataset);
@@ -52,6 +52,19 @@ methods (Test)
         catch
             % Expected.
         end
+    end
+
+    function testTransposedDatasetWarns(testCase)
+        % A dataset passed in the old (p x n) convention, or otherwise
+        % with more columns than rows, should warn: this shape is
+        % unusual for these benchmark datasets and is exactly what an
+        % accidental transpose looks like. Built synthetically here
+        % (2 points, 12 features, k=1) so the mod(kp,p) guard does not
+        % also fire and mask the warning under test.
+        syntheticDataset = ones(2, 12);
+        syntheticX = ones(12, 1);
+        testCase.verifyWarning(@() clustergallagher(syntheticX, syntheticDataset), ...
+            'clustergallagher:datasetShape');
     end
 end
 

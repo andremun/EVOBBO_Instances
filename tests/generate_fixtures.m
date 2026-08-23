@@ -62,7 +62,7 @@ fclose(fid_lp);
 % -------------------------------------------------------------------------
 load(fullfile(data_dir, 'iris.mat'));
 Xc = inputs.ClusterGallagherX;
-Y = clustergallagher(Xc, data');
+Y = clustergallagher(Xc, data);  % data is (n x p); clustergallagher no longer needs it transposed
 
 fid_cg = fopen(fullfile(fixtures_dir, 'clustergallagher.csv'), 'w');
 fprintf(fid_cg, 'sample,y\n');

@@ -12,12 +12,11 @@ classdef TestMunozSmithMiles < matlab.unittest.TestCase
 % s2d10) that carry no expression. See munozsmithmiles.m's version
 % history for why those errors exist at all.
 %
-% Deliberately not tested here: passing X with more or fewer rows than d
-% is not an error in munozsmithmiles.m itself (unlike the Python port,
-% which validates this explicitly) -- the stored expression only ever
-% indexes rows 1..d, so extra rows are silently ignored rather than
-% rejected. A test asserting otherwise would fail against correct
-% behavior.
+% Also checks that X must have exactly d rows (see testWrongRowCountErrors
+% below): before that guard was added, passing X with more rows than d
+% silently used only the first d and ignored the rest, matching the
+% Python port's stricter behavior only by accident of the Python port
+% validating this from the start.
 %
 % By: Mario Andres Munoz Acosta
 %     School of Mathematics and Statistics
@@ -99,6 +98,17 @@ methods (Test)
             testCase.verifyFail('Expected an error for an invalid strategy id.');
         catch
             % Expected: no variable s4d2 exists in munozsmithmiles.mat.
+        end
+    end
+
+    function testWrongRowCountErrors(testCase)
+        % X10 has 10 rows; requesting d=2 expects exactly 2.
+        X10 = testCase.XByD(10);
+        try
+            munozsmithmiles(X10, 1, 2, 1);
+            testCase.verifyFail('Expected an error for X not having exactly d rows.');
+        catch
+            % Expected.
         end
     end
 end

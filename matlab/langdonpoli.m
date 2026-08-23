@@ -17,14 +17,27 @@ function Y = langdonpoli(X,fid)
 %     Australia
 %     2020
 %
-% Input: 
-%   X       - a matrix of (d x N) candidate solutions.
+% Input:
+%   X       - a matrix of (2 x N) candidate solutions.
 %   fid     - function identifier. Determines the number of functions
 %             available. Cannot be larger than 19.
-%             
+%
 % Output:
 %   Y       - a (N) vector of fitness values
 %
+% Version History:
+%     v1: 2020 | Original release.
+%     v2: 2026 | Added a guard for X not having exactly 2 rows: these
+%                functions are inherently 2D (see the range note above),
+%                and a differently-shaped X previously either errored
+%                confusingly inside the evaluation or, if X happened to
+%                have more than 2 rows, silently used only the first 2.
+%
+
+if size(X,1) ~= 2
+    error(['X has ' num2str(size(X,1)) ' rows, expected exactly 2 rows: ' ...
+            'these functions are defined in 2 dimensions only.']);
+end
 
 X = 2.*X;
 

@@ -44,7 +44,9 @@ one copy of each dataset.
 EVOBBO_Instances/
 ├── data/                    # shared data, read by both platforms below
 │   ├── munozsmithmiles.mat  # instance definitions for munozsmithmiles
-│   └── *.mat                 # clustering datasets (see Datasets below)
+│   ├── *.mat                 # clustering datasets (see Datasets below)
+│   ├── *.csv                 # CSV mirror of every file above, same name
+│   └── export_to_csv.py      # regenerates the CSV mirrors from the .mat files
 ├── matlab/
 │   ├── munozsmithmiles.m    # generated BBO instances (see source 1 above)
 │   ├── langdonpoli.m         # Langdon and Poli instances (source 3 above)
@@ -160,24 +162,36 @@ Y = langdonpoli(X, fid)  # X: numpy array, shape (2, N)
 % X is a (k*p x N) matrix of candidate solutions, where each column
 % holds the positions of k cluster centers in a dataset of
 % dimensionality p.
-% dataset is a (p x n) matrix, transposed from the (n x p) `data`
-% variable stored in each .mat file listed in Datasets below.
+% dataset is an (n x p) matrix, the same orientation as the `data`
+% variable stored in each .mat file listed in Datasets below. Pass it
+% as loaded, do not transpose it.
 load('data/iris.mat');      % loads variable `data`, shape (150 x 4)
-Y = clustergallagher(X, data');
+Y = clustergallagher(X, data);
 ```
 
 ```python
 from evobbo_instances import clustergallagher
 from scipy.io import loadmat
 data = loadmat('data/iris.mat')['data']  # shape (150, 4) = (n, p)
-Y = clustergallagher(X, data.T)          # dataset: shape (p, n)
+Y = clustergallagher(X, data)            # dataset: shape (n, p), as loaded
 ```
+
+`clustergallagher`'s `dataset` argument changed orientation in 2026 (from
+`(p, n)` to `(n, p)`, removing the transpose callers used to need). A
+caller still transposing before calling now gets a clear error in the
+common case, since `dataset`'s swapped shape almost never divides `X`'s
+row count evenly; see `matlab/clustergallagher.m`'s version history.
 
 ## Datasets
 
 Each `.mat` file below, in `data/` (all files except
 `munozsmithmiles.mat`), stores one variable, `data`, of shape (n points
 x p features), for use as the `dataset` input to `clustergallagher`.
+Each also has a CSV mirror of the same name (for example
+`data/iris.csv` next to `data/iris.mat`): plain numbers, no header row,
+same `(n, p)` orientation, readable by anything that reads CSV. Both
+formats hold the same values; regenerate the CSVs from the `.mat` files
+with `python data/export_to_csv.py` if the `.mat` files ever change.
 
 | File | Points (n) | Features (p) |
 |---|---|---|
@@ -226,7 +240,14 @@ Repository. They are redistributed here only as fixed inputs for
   produced and what the port does and does not cover.
 - **Data files load in Python with no conversion.** Every `.mat` file in
   `data/` is a MATLAB v5 file. Read it with
-  `scipy.io.loadmat('data/iris.mat')['data']`.
+  `scipy.io.loadmat('data/iris.mat')['data']`. For a tool or language
+  without a MATLAB reader at all, read the CSV mirror instead
+  (`data/iris.csv`): same values, no dependency beyond a CSV reader.
+  `data/munozsmithmiles.csv` mirrors `munozsmithmiles.mat` too, as a
+  single long-format table (`sid, d, fid, expression`) instead of six
+  cell arrays: it is not yet wired into either loader, so it is a
+  human-readable, greppable view of the same 1520 expressions, not
+  (yet) an alternative way to call `munozsmithmiles`.
 - **`matlab/bbob.v13.09/` is a frozen 2011 snapshot** of the COCO
   benchmarking platform, kept here only as a historical reference for
   the paper, and is not ported. New work should use the [current

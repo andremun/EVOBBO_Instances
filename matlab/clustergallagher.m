@@ -11,13 +11,15 @@ function Y = clustergallagher(X,dataset)
 %     Australia
 %     2019
 %
-% Input: 
+% Input:
 %   X       - a (kp x N) matrix of candidate solutions, where each column
 %             vector represents the positions of k cluster centers.  That
 %             is, the dimensionality of the optimization problem is kp.
-%   dataset - an (p x n) dataset to be clustered (n data points of
-%             dimensionality p). There are several examples of data given
-%             in this package (all files but 'munozsmithmiles.mat')
+%   dataset - an (n x p) dataset to be clustered (n data points of
+%             dimensionality p), one row per point: the same orientation
+%             the 'data' variable in this package's .mat files already
+%             uses (all files but 'munozsmithmiles.mat'). Do not
+%             transpose it before calling.
 % Output:
 %   Y       - a (N x 1) vector of fitness values
 %
@@ -29,11 +31,32 @@ function Y = clustergallagher(X,dataset)
 %     v3: 08/07/2019 | Version published in MATILDA re "Generating New
 %                      Space-Filling Test Instances for Continuous
 %                      Black-Box Optimization" Accepted in Evol. Comput.
+%     v4: 2026 | Breaking change: dataset is now (n x p), matching the
+%                'data' variable's native orientation in this package's
+%                .mat files, so callers no longer transpose it by hand.
+%                Callers still on the old (p x n) convention now get a
+%                clear error from the new size guards below in the
+%                common case (p and kp not sharing a common factor
+%                pattern), rather than a silent wrong answer. Also added
+%                an explicit guard for kp not a multiple of p, and a
+%                warning for a dataset shaped (p x n) by mistake (more
+%                columns than rows is unusual for these datasets).
 %
 
 % Formatting the data
-[p,n] = size(dataset);
+[n,p] = size(dataset);
+if p > n
+    warning('clustergallagher:datasetShape', ...
+        ['dataset has more columns (' num2str(p) ') than rows (' num2str(n) '). ' ...
+         'dataset should be (n x p): one row per data point. If you transposed ' ...
+         'it before calling, pass it untransposed instead.']);
+end
+dataset = dataset';  % (p x n) from here on, matching the rest of this function
 [kp,N] = size(X);
+if mod(kp,p) ~= 0
+    error(['X has ' num2str(kp) ' rows, which is not a multiple of the dataset ' ...
+            'dimensionality p = ' num2str(p) '.']);
+end
 k = kp./p;
 X = reshape(X,p,k,N);
 % Pairwise distances of all data points

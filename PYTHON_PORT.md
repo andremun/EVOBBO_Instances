@@ -101,6 +101,58 @@ disagree, regenerate the fixtures from MATLAB (not Octave) and treat any
 resulting diff as a genuine Octave/MATLAB behavior gap to investigate,
 not as noise to paper over.
 
+## Dimension guards (2026)
+
+Both languages now validate input shape explicitly, in every function
+that previously did not:
+
+- `munozsmithmiles`: `X` must have exactly `d` rows. Before this guard,
+  MATLAB silently used only the first `d` rows of a wider `X` (the
+  Python port already validated this).
+- `langdonpoli`: `X` must have exactly 2 rows (same MATLAB gap, same
+  fix).
+- `clustergallagher`: `X`'s row count must be a multiple of `dataset`'s
+  feature count `p` (the Python port already validated this; MATLAB
+  previously only failed incidentally, through `reshape` erroring on a
+  non-integer `k`). `clustergallagher` also now warns, in both
+  languages, when `dataset` has more columns than rows: unusual for
+  these benchmark datasets, and exactly what an accidental transpose
+  looks like.
+
+None of these change behavior for a correct call. Each turns a
+previously silent wrong answer, or an unhelpfully generic error, into a
+clear one naming the actual problem.
+
+## `clustergallagher`'s `dataset` orientation (2026, breaking change)
+
+`dataset` used to be `(p, n)`, requiring every caller to transpose the
+native `(n, p)` `data` array from the `.mat`/`.csv` files before calling
+(`clustergallagher(X, data')` in MATLAB, `clustergallagher(X, data.T)`
+in Python). Both languages now accept `dataset` as `(n, p)` directly,
+transposing it internally to reach the same numbers the rest of the
+function already worked with. Because the internal computation is
+unchanged, this is a calling-convention change, not a numerical one:
+the existing `tests/fixtures/clustergallagher.csv` reference values are
+still correct after the change, confirmed by re-running
+`tests/generate_fixtures.m` and diffing (no change).
+
+A caller still transposing under the old convention is not silently
+wrong in the typical case: `dataset`'s swapped shape almost never
+divides `X`'s row count evenly, so the `kp % p` guard above catches it.
+
+## Data files also mirror to CSV (2026)
+
+Every `.mat` file in `data/` (the 22 numeric datasets and
+`munozsmithmiles.mat`) now has a CSV mirror of the same name, generated
+by `data/export_to_csv.py` and committed alongside the `.mat` files, not
+replacing them. The numeric datasets round-trip exactly (verified
+NaN-aware against every value); `munozsmithmiles.csv` is a long-format
+`(sid, d, fid, expression)` table covering all 1520 stored individuals,
+verified row-for-row against the `.mat` file's six cell arrays. Neither
+loader (`munozsmithmiles.m` / `.py`) reads the CSV form yet; it exists
+for cross-platform and human readability, see the README's Datasets
+section.
+
 ## Recommendation
 
 Do not port `matlab/bbob.v13.09/`. Point users to the official COCO/BBOB
