@@ -3,9 +3,9 @@ function Y = munozsmithmiles(X,sid,d,fid)
 % munozsmithmiles.m
 % -------------------------------------------------------------------------
 %
-% Functions generated for the paper "Generating New Space-Filling Test
-% Instances for Continuous Black-Box Optimization" Accepted in Evol.
-% Comput. 2019
+% This function implements part of the paper "Generating New
+% Space-Filling Test Instances for Continuous Black-Box Optimization"
+% (Evol. Comput., 2019).
 %
 % By: Mario Andres Munoz Acosta
 %     School of Mathematics and Statistics
@@ -13,45 +13,58 @@ function Y = munozsmithmiles(X,sid,d,fid)
 %     Australia
 %     2019
 %
-% Input: 
+% Input:
 %   X       - a matrix of (d x N) candidate solutions.
 %   sid     - a strategy identifier. It can be a number between 1 and 3.
-%   d       - function dimension. It can be either 2 or 10
-%   fid     - function identifier. Determines the number of functions
-%             available. It is given by the following table:
-%             
+%   d       - function dimension. It can be either 2 or 10.
+%   fid     - function identifier. It determines the number of
+%             functions available. See the table below for valid
+%             values:
+%
 %             s1d2  <= 600
 %             s1d10 <= 120
 %             s2d2  <= 100
 %             s2d10 <= 500
 %             s3d2  <= 100
 %             s3d10 <= 100
-% 
-% Output:
-%   Y       - a (N) vector of fitness values
 %
-% Must have the file '../data/munozsmithmiles.mat', relative to this
-% file, to work. Must have square.m and negexp.m on the MATLAB path:
-% these are extra building-block functions used by some of the
-% generated expressions.
+% Output:
+%   Y       - a (N) vector of fitness values.
+%
+% This function needs the file '../data/munozsmithmiles.mat', relative
+% to this file. It also needs square.m and negexp.m on the MATLAB path.
+% Some generated expressions use these as extra building-block
+% functions.
 %
 % Version History:
 %     v1: 2019 | Original release.
-%     v2: 2026 | Fixed two bugs that made every call fail: the cache
-%                check tested the string literal 'evalstr' instead of
-%                the variable evalstr, so the .mat file was never
-%                loaded, and the expression was evaluated with feval on
-%                a string (which needs a function name, not an
-%                expression) instead of eval. Also fixed the cache key
-%                to include sid and d, so switching strategy or
-%                dimension between calls now reloads correctly, and
-%                added an explicit error for the 3 individuals (all in
-%                experiment s2d10) that carry no expression.
-%     v3: 2026 | Moved to matlab/; the data file now loads from
-%                ../data/munozsmithmiles.mat relative to this file
-%                instead of the MATLAB current directory.
+%     v2: 2026 | Fixed two bugs that made every call fail. First: the
+%                cache check tested the string literal 'evalstr'
+%                instead of the variable evalstr. The .mat file never
+%                loaded because of this. Second: the code evaluated the
+%                expression with feval on a string. feval needs a
+%                function name, not an expression. The fix uses eval
+%                instead. Also fixed the cache key to include sid and
+%                d, so it now reloads correctly when strategy or
+%                dimension changes between calls. Added an explicit
+%                error for the 3 individuals (all in experiment s2d10)
+%                that carry no expression.
+%     v3: 2026 | Moved to matlab/. The data file now loads from
+%                ../data/munozsmithmiles.mat, relative to this file,
+%                instead of from the MATLAB current directory.
+%     v4: 2026 | Added a guard for X not having exactly d rows. Before
+%                this guard: if X had more than d rows, the function
+%                silently used only the first d rows and ignored the
+%                rest. If X had fewer rows than d, the function threw a
+%                confusing "index exceeds matrix dimensions" error
+%                instead of naming the actual problem.
 %
 
+
+if size(X,1) ~= d
+    error(['X has ' num2str(size(X,1)) ' rows. It must have exactly d = ' ...
+            num2str(d) ' rows: one per dimension, one column per candidate solution.']);
+end
 
 persistent evalstr cached_key
 
@@ -63,8 +76,8 @@ if isempty(evalstr) || ~strcmp(cached_key, key)
     try
         load(mat_path, key);
     catch ME
-        disp('Either the strategy number or the dimension are incorrect.');
-        disp('Choose an strategy number between 1 and 3 and a dimension equal to 2 or 10.');
+        disp('Either the strategy number or the dimension is incorrect.');
+        disp('Choose a strategy number between 1 and 3 and a dimension equal to 2 or 10.');
         rethrow(ME);
     end
 
@@ -74,8 +87,8 @@ end
 
 nfunc = length(evalstr);
 if fid>nfunc
-    error(['The function index ' num2str(fid) ' is incorrect, there are ' ...
-            num2str(nfunc) ' functions in experiment ' key]);
+    error(['Function index ' num2str(fid) ' is invalid. Only ' ...
+            num2str(nfunc) ' functions exist in experiment ' key '.']);
 end
 
 expr = evalstr{fid};

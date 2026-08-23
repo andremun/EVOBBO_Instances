@@ -3,13 +3,14 @@ function Y = langdonpoli(X,fid)
 % langdonpoli.m
 % -------------------------------------------------------------------------
 %
-% Functions from Landgon and Poli 2007 (IEEE Tran. Evol. Comput.) generated
-% for the paper "Generating New Space-Filling Test Instances for Continuous
-% Black-Box Optimization" Accepted in Evol. Comput. 2019.
-% 
-% To make these functions' range, which is [-10 10]^2, compatible with the
-% range defined in the BBOB benchmark set, which is [-5 5]^2, X is
-% multiplied by 2, and Y is made zero if X exceeds the bounds.
+% This function implements functions from Langdon and Poli (2007, IEEE
+% Trans. Evol. Comput.), for the paper "Generating New Space-Filling
+% Test Instances for Continuous Black-Box Optimization" (Evol. Comput.,
+% 2019).
+%
+% These functions' native range is [-10 10]^2. The BBOB benchmark set
+% uses [-5 5]^2. To match BBOB, this function multiplies X by 2. It
+% also sets Y to zero wherever X exceeds the bounds.
 %
 % By: Mario Andres Munoz Acosta
 %     School of Mathematics and Statistics
@@ -17,14 +18,28 @@ function Y = langdonpoli(X,fid)
 %     Australia
 %     2020
 %
-% Input: 
-%   X       - a matrix of (d x N) candidate solutions.
-%   fid     - function identifier. Determines the number of functions
-%             available. Cannot be larger than 19.
-%             
-% Output:
-%   Y       - a (N) vector of fitness values
+% Input:
+%   X       - a matrix of (2 x N) candidate solutions.
+%   fid     - function identifier. It determines the number of
+%             functions available. It cannot be larger than 19.
 %
+% Output:
+%   Y       - a (N) vector of fitness values.
+%
+% Version History:
+%     v1: 2020 | Original release.
+%     v2: 2026 | Added a guard for X not having exactly 2 rows. These
+%                functions are inherently 2D (see the range note
+%                above). Before this guard, a differently-shaped X
+%                either errored confusingly inside the evaluation, or,
+%                if X had more than 2 rows, silently used only the
+%                first 2.
+%
+
+if size(X,1) ~= 2
+    error(['X has ' num2str(size(X,1)) ' rows. It must have exactly 2 rows: ' ...
+            'these functions are defined in 2 dimensions only.']);
+end
 
 X = 2.*X;
 
@@ -49,8 +64,8 @@ evalstr = {@(x) 0.11 + 0.77.*x(:,1).*(1 - x(:,1)) - 0.075.*x(:,2);          % Fi
            @(x) (x(:,1).^2).*(x(:,2).^4)};                                  % Fig 34
 
 if fid>length(evalstr)
-    error(['The function index ' num2str(fid) ' is incorrect, there are ' ...
-                num2str(length(evalstr)) ' functions available']);
+    error(['Function index ' num2str(fid) ' is invalid. Only ' ...
+                num2str(length(evalstr)) ' functions exist.']);
 end
 
 Y = feval(evalstr{fid},X');

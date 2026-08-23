@@ -1,7 +1,7 @@
 """Validate clustergallagher against fixed MATLAB (Octave) reference output.
 
-See tests/generate_fixtures.m for how tests/fixtures/clustergallagher.csv
-was produced.
+tests/generate_fixtures.m produces tests/fixtures/clustergallagher.csv.
+See that script for details.
 """
 
 import csv
@@ -14,7 +14,7 @@ from scipy.io import loadmat
 from evobbo_instances import clustergallagher
 from evobbo_instances._paths import DEFAULT_DATA_DIR
 
-FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures"
 
 # Same fixed input as tests/generate_fixtures.m: 2 candidates, k=3
 # clusters, p=4 (iris has 4 features).
@@ -42,8 +42,7 @@ def _load_fixture():
 
 
 def _iris_dataset():
-    data = loadmat(DEFAULT_DATA_DIR / "iris.mat")["data"]  # (150, 4)
-    return data.T  # (4, 150) = (p, n)
+    return loadmat(DEFAULT_DATA_DIR / "iris.mat")["data"]  # (150, 4) = (n, p), native orientation
 
 
 @pytest.mark.parametrize("sample,expected", _load_fixture())
@@ -55,3 +54,15 @@ def test_matches_matlab_reference(sample, expected):
 def test_mismatched_dimensionality_raises():
     with pytest.raises(ValueError):
         clustergallagher(X[:-1, :], _iris_dataset())  # 11 rows, not a multiple of p=4
+
+
+def test_transposed_dataset_warns():
+    # A dataset with more columns than rows is unusual for these
+    # benchmark datasets and is exactly what an accidental transpose
+    # looks like. This test builds the dataset synthetically (2 points,
+    # 12 features, k=1), so the kp % p guard does not also raise and
+    # hide the warning.
+    synthetic_dataset = np.ones((2, 12))
+    synthetic_X = np.ones((12, 1))
+    with pytest.warns(UserWarning, match="more columns"):
+        clustergallagher(synthetic_X, synthetic_dataset)

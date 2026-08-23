@@ -1,6 +1,7 @@
 # Evolved BBO Instances
 
 [![DOI](https://zenodo.org/badge/198110974.svg)](https://zenodo.org/badge/latestdoi/198110974)
+[![MATLAB tests](https://github.com/andremun/EVOBBO_Instances/actions/workflows/matlab-tests.yml/badge.svg)](https://github.com/andremun/EVOBBO_Instances/actions/workflows/matlab-tests.yml)
 
 This repository holds test instances and datasets for continuous
 black-box optimization (BBO) research. It supports the paper M.A. Muñoz
@@ -11,9 +12,10 @@ Evol. Comput., 2019.
 The repository provides instances from four sources:
 
 1. **Generated instances** from the methodology in the paper above, through
-   the function `matlab/munozsmithmiles.m` (needs `matlab/square.m` and
-   `matlab/negexp.m`; see that function's version history for two bugs
-   fixed in 2026 that made every call fail before the fix).
+   the function `matlab/munozsmithmiles.m`. This function needs
+   `matlab/square.m` and `matlab/negexp.m`. See that function's version
+   history for two bugs, fixed in 2026, that made every call fail before
+   the fix.
 2. **Reference BBOB instances** from the "Comparing Continuous Optimization"
    benchmarking platform v13.09 (2011), in `matlab/bbob.v13.09/`. Use the
    [current COCO/BBOB platform](https://github.com/numbbo/coco) for new
@@ -29,9 +31,9 @@ The repository provides instances from four sources:
    `matlab/clustergallagher.m`, evaluated over the clustering datasets in
    this repository (see [Datasets](#datasets) below).
 
-Sources 1, 3, and 4 above each have a Python equivalent, see
+Sources 1, 3, and 4 above each have a Python equivalent. See
 [Usage](#usage) below. Source 2, the vendored BBOB v13.09 platform, is
-not ported; see [Reusing this repository](#reusing-this-repository).
+not ported. See [Reusing this repository](#reusing-this-repository).
 
 ## Contents
 
@@ -43,22 +45,31 @@ one copy of each dataset.
 EVOBBO_Instances/
 ├── data/                    # shared data, read by both platforms below
 │   ├── munozsmithmiles.mat  # instance definitions for munozsmithmiles
-│   └── *.mat                 # clustering datasets (see Datasets below)
+│   ├── *.mat                 # clustering datasets (see Datasets below)
+│   ├── *.csv                 # CSV mirror of every file above, same name
+│   └── export_to_csv.py      # regenerates the CSV mirrors from the .mat files
 ├── matlab/
 │   ├── munozsmithmiles.m    # generated BBO instances (see source 1 above)
 │   ├── langdonpoli.m         # Langdon and Poli instances (source 3 above)
 │   ├── clustergallagher.m    # clustering-based instances (source 4 above)
 │   ├── square.m, negexp.m    # helper functions used by munozsmithmiles.m
+│   ├── tests/                # matlab.unittest suite, run in CI (below)
 │   └── bbob.v13.09/          # reference COCO/BBOB v13.09 platform
 │                              # (own Simplified BSD license, see below)
 ├── python/
 │   ├── evobbo_instances/     # Python port of the 3 functions above
-│   ├── tests/                # Python test suite, checked against MATLAB
+│   ├── tests/                # pytest suite, checked against tests/fixtures/
 │   └── pyproject.toml, requirements.txt
+├── tests/                   # fixtures shared by both test suites above
+│   ├── fixtureInputs.m      # candidate solutions both suites evaluate
+│   ├── generate_fixtures.m  # (re)writes fixtures/*.csv from fixtureInputs.m
+│   └── fixtures/*.csv       # committed MATLAB reference output
 ├── LICENSE                  # MIT license for this repository's own code
 │                             # (matlab/bbob.v13.09/ is vendored under its
 │                             # own license, matlab/bbob.v13.09/LICENSE.txt)
-└── .github/ISSUE_TEMPLATE/  # bug report and feature request templates
+└── .github/
+    ├── workflows/matlab-tests.yml  # runs matlab/tests/ on push/PR
+    └── ISSUE_TEMPLATE/             # bug report and feature request templates
 ```
 
 ## Installation
@@ -66,14 +77,20 @@ EVOBBO_Instances/
 ### MATLAB
 
 The MATLAB code needs a current version of
-[MATLAB](https://www.mathworks.com). It has been tested on r2018b, and
-should work on earlier versions too. Most functions are vectorized, so
-they run fast under MATLAB. No toolbox beyond base MATLAB is required.
+[MATLAB](https://www.mathworks.com). It runs on r2018b. It should also
+run on earlier versions, though this is not tested. Most functions are
+vectorized, so they run fast. No toolbox beyond base MATLAB is
+required.
 Add `matlab/` to the MATLAB path before calling any function:
 
 ```matlab
 addpath('matlab');
 ```
+
+To run the MATLAB test suite locally: `run('matlab/tests/run_tests.m')` from
+the repository root, or any directory (it resolves its own paths).
+[GitHub Actions](.github/workflows/matlab-tests.yml) runs the same suite
+on every push and pull request, against real MATLAB.
 
 ### Python
 
@@ -86,7 +103,7 @@ pip install -e .
 
 This installs the `evobbo_instances` package and its two dependencies,
 `numpy` and `scipy`. Run `pip install -e ".[test]"` instead to also get
-`pytest`, and run the test suite with `pytest tests/` (still from
+`pytest`. Then run the test suite with `pytest tests/` (still from
 `python/`).
 
 ## Usage
@@ -125,8 +142,8 @@ returning a silently wrong value.
 
 This function needs `data/munozsmithmiles.mat`. Both the MATLAB and
 Python functions find it there automatically, relative to their own
-location; pass `data_dir` to the Python function to point somewhere
-else instead.
+location. To point somewhere else instead, pass `data_dir` to the
+Python function.
 
 ### Langdon and Poli instances (`matlab/langdonpoli.m` / `python/evobbo_instances/langdonpoli.py`)
 
@@ -147,24 +164,37 @@ Y = langdonpoli(X, fid)  # X: numpy array, shape (2, N)
 % X is a (k*p x N) matrix of candidate solutions, where each column
 % holds the positions of k cluster centers in a dataset of
 % dimensionality p.
-% dataset is a (p x n) matrix, transposed from the (n x p) `data`
-% variable stored in each .mat file listed in Datasets below.
+% dataset is an (n x p) matrix, the same orientation as the `data`
+% variable stored in each .mat file listed in Datasets below. Pass it
+% as loaded, do not transpose it.
 load('data/iris.mat');      % loads variable `data`, shape (150 x 4)
-Y = clustergallagher(X, data');
+Y = clustergallagher(X, data);
 ```
 
 ```python
 from evobbo_instances import clustergallagher
 from scipy.io import loadmat
 data = loadmat('data/iris.mat')['data']  # shape (150, 4) = (n, p)
-Y = clustergallagher(X, data.T)          # dataset: shape (p, n)
+Y = clustergallagher(X, data)            # dataset: shape (n, p), as loaded
 ```
+
+`clustergallagher`'s `dataset` argument changed orientation in 2026,
+from `(p, n)` to `(n, p)`. Callers no longer need to transpose it. A
+caller who still transposes it before calling now gets a clear error in
+the common case: `dataset`'s swapped shape almost never divides `X`'s
+row count evenly. See `matlab/clustergallagher.m`'s version history for
+details.
 
 ## Datasets
 
-Each `.mat` file below, in `data/` (all files except
-`munozsmithmiles.mat`), stores one variable, `data`, of shape (n points
-x p features), for use as the `dataset` input to `clustergallagher`.
+Each `.mat` file below (all files except `munozsmithmiles.mat`) is in
+`data/`. It stores one variable, `data`, of shape (n points x p
+features), for use as the `dataset` input to `clustergallagher`. Each
+also has a CSV mirror of the same name (for example `data/iris.csv`
+next to `data/iris.mat`): plain numbers, no header row, same `(n, p)`
+orientation, readable by anything that reads CSV. Both formats hold the
+same values. If the `.mat` files ever change, regenerate the CSVs with
+`python data/export_to_csv.py`.
 
 | File | Points (n) | Features (p) |
 |---|---|---|
@@ -193,7 +223,7 @@ x p features), for use as the `dataset` input to `clustergallagher`.
 | `data/yeast.mat` | 1484 | 8 |
 
 These datasets come from public sources such as the UCI Machine Learning
-Repository. They are redistributed here only as fixed inputs for
+Repository. This repository redistributes them only as fixed inputs for
 `clustergallagher`.
 
 ## Reusing this repository
@@ -205,19 +235,28 @@ Repository. They are redistributed here only as fixed inputs for
   is a single copy of the data.
 - **A Python port of the three instance-generating functions**
   (`matlab/munozsmithmiles.m`, `matlab/langdonpoli.m`,
-  `matlab/clustergallagher.m`) ships in `python/evobbo_instances/`, see
-  [Usage](#usage) above. Its output is checked against MATLAB reference
-  values in `python/tests/`; see [`PYTHON_PORT.md`](PYTHON_PORT.md) for
-  how those reference values were produced and what the port does and
+  `matlab/clustergallagher.m`) ships in `python/evobbo_instances/`. See
+  [Usage](#usage) above. `python/tests/` checks the port's output
+  against the reference values in `tests/fixtures/`. `matlab/tests/`
+  checks the MATLAB source against the same values. Both run on every CI
+  run, on real MATLAB. See [`PYTHON_PORT.md`](PYTHON_PORT.md) for how
+  those reference values were produced, and for what the port does and
   does not cover.
 - **Data files load in Python with no conversion.** Every `.mat` file in
   `data/` is a MATLAB v5 file. Read it with
-  `scipy.io.loadmat('data/iris.mat')['data']`.
+  `scipy.io.loadmat('data/iris.mat')['data']`. For a tool or language
+  without a MATLAB reader at all, read the CSV mirror instead
+  (`data/iris.csv`): same values, no dependency beyond a CSV reader.
+  `data/munozsmithmiles.csv` mirrors `munozsmithmiles.mat` too. It uses
+  one long-format table (`sid, d, fid, expression`) instead of six cell
+  arrays. Neither loader reads this CSV file yet. For now, it is a
+  human-readable, greppable view of the same 1520 expressions, not an
+  alternative way to call `munozsmithmiles`.
 - **`matlab/bbob.v13.09/` is a frozen 2011 snapshot** of the COCO
-  benchmarking platform, kept here only as a historical reference for
-  the paper, and is not ported. New work should use the [current
-  COCO/BBOB platform](https://github.com/numbbo/coco), which ships an
-  official Python interface.
+  benchmarking platform. This repository keeps it only as a historical
+  reference for the paper, and does not port it. New work should use the
+  [current COCO/BBOB platform](https://github.com/numbbo/coco), which
+  ships an official Python interface.
 
 ## Reproducibility
 

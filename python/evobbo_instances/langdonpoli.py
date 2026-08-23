@@ -4,12 +4,12 @@ Functions from Langdon and Poli 2007 (IEEE Trans. Evol. Comput.), generated
 for the paper "Generating New Space-Filling Test Instances for Continuous
 Black-Box Optimization", Evol. Comput., 2019.
 
-To make these functions' range, which is [-10, 10]^2, compatible with the
-range defined in the BBOB benchmark set, which is [-5, 5]^2, X is
-multiplied by 2, and Y is made zero if X exceeds the bounds.
+These functions' native range is [-10, 10]^2. The BBOB benchmark set
+uses [-5, 5]^2. To match BBOB, this function multiplies X by 2. It also
+sets Y to zero wherever X exceeds the bounds.
 
-Ported line-by-line from the MATLAB source. Validated against MATLAB
-reference output in tests/test_langdonpoli.py.
+This port follows the MATLAB source line-by-line.
+tests/test_langdonpoli.py validates it against MATLAB reference output.
 """
 
 import numpy as np
@@ -58,8 +58,8 @@ def langdonpoli(X, fid):
         raise ValueError(f"X must have shape (2, N), got {X.shape}")
     if not (1 <= fid <= len(_FUNCTIONS)):
         raise ValueError(
-            f"The function index {fid} is incorrect, there are "
-            f"{len(_FUNCTIONS)} functions available"
+            f"Function index {fid} is invalid. "
+            f"Only {len(_FUNCTIONS)} functions exist."
         )
 
     X = 2.0 * X

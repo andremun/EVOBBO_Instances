@@ -7,9 +7,12 @@ example:
 
 This module parses that grammar directly and evaluates it with numpy,
 rather than calling Python's eval() on untrusted-looking text. The
-grammar uses only: the binary functions plus/minus/times, the unary
-functions exp/negexp/cos/sin/square/tanh, indexing into a row of X
-(X(1,:), X(2,:), ...), and numeric literals in brackets ([-10.4887]).
+grammar uses only:
+
+- The binary functions plus, minus, times
+- The unary functions exp, negexp, cos, sin, square, tanh
+- Indexing into a row of X: X(1,:), X(2,:), and so on
+- Numeric literals in brackets, for example [-10.4887]
 """
 
 import re
@@ -48,7 +51,7 @@ _BINARY_FUNCS = {
 
 
 class ExpressionError(ValueError):
-    """Raised for a malformed or unsupported expression string."""
+    """This error means the expression string is malformed or unsupported."""
 
 
 def _tokenize(expr):
@@ -159,8 +162,50 @@ def _evaluate(node, X):
     raise ExpressionError(f"Unknown node kind {kind!r}")
 
 
+def parse_expression(expr):
+    """Parse one instance expression string into a reusable tree.
+
+    Parsing is the expensive part of evaluating an expression, roughly
+    5-10x the cost of evaluating an already-parsed tree, and longer for
+    longer expressions. Callers that evaluate the same expression
+    repeatedly should parse it once with this function, then reuse the
+    tree with evaluate_tree(). One example: munozsmithmiles(), called
+    once per optimizer iteration with a fixed (sid, d, fid). Calling
+    evaluate_expression() in a loop instead parses the expression every
+    time.
+
+    Args:
+        expr: the MATLAB expression string, e.g. "plus(X(1,:),X(2,:))".
+
+    Returns:
+        An opaque tree object for evaluate_tree().
+    """
+    expr = expr.strip()
+    if not expr or expr == "[]":
+        raise ExpressionError("Empty expression (no instance defined)")
+    return _Parser(_tokenize(expr), expr).parse()
+
+
+def evaluate_tree(tree, X):
+    """Evaluate a tree from parse_expression() over candidate solutions X.
+
+    Args:
+        tree: the return value of parse_expression().
+        X: numpy array of shape (d, N).
+
+    Returns:
+        A numpy array of shape (N,).
+    """
+    result = _evaluate(tree, X)
+    return np.broadcast_to(np.asarray(result, dtype=float), (X.shape[1],)).copy()
+
+
 def evaluate_expression(expr, X):
-    """Evaluate one instance expression string over candidate solutions X.
+    """Parse and evaluate one instance expression string in one call.
+
+    Convenience wrapper for a single evaluation. Prefer parse_expression()
+    plus evaluate_tree() when evaluating the same expr repeatedly: see
+    parse_expression()'s docstring.
 
     Args:
         expr: the MATLAB expression string, e.g. "plus(X(1,:),X(2,:))".
@@ -169,9 +214,4 @@ def evaluate_expression(expr, X):
     Returns:
         A numpy array of shape (N,).
     """
-    expr = expr.strip()
-    if not expr or expr == "[]":
-        raise ExpressionError("Empty expression (no instance defined)")
-    tree = _Parser(_tokenize(expr), expr).parse()
-    result = _evaluate(tree, X)
-    return np.broadcast_to(np.asarray(result, dtype=float), (X.shape[1],)).copy()
+    return evaluate_tree(parse_expression(expr), X)

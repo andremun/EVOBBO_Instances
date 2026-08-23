@@ -1,0 +1,47 @@
+name: MATLAB tests
+
+on:
+  push: {}
+  pull_request:
+    branches: [master]
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # Safety net, not decoration: a runner-side network/mirror hang during
+    # setup-matlab's install step can stall with zero log output for
+    # hours. This repo's actual run time is a few minutes (3 small
+    # functions, no toolboxes); 45 minutes is ample margin over that.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: matlab-actions/setup-matlab@v3
+        with:
+          # Pinned, not 'latest': a specific, deliberate choice of "a
+          # current version of MATLAB" (matching the README's own
+          # compatibility wording) that CI keeps validating release over
+          # release, rather than silently drifting to whatever MATLAB
+          # ships next. Bump this deliberately if the README's stated
+          # compatibility changes.
+          # No products list: matlab/*.m uses only core MATLAB (eval,
+          # reshape, bsxfun, load, persistent variables, elementwise
+          # math) -- no toolbox. matlab/bbob.v13.09/ is vendored,
+          # untested reference code, not part of this suite; see
+          # PYTHON_PORT.md.
+          release: R2024b
+
+      # run_tests.m aborts (errors) on any test failure, which
+      # run-command turns into a nonzero exit code and a failed step --
+      # no separate pass/fail parsing needed here.
+      - uses: matlab-actions/run-command@v3
+        with:
+          command: run('matlab/tests/run_tests.m')
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage.xml
+          retention-days: 14

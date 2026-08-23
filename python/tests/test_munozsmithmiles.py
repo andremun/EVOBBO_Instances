@@ -1,9 +1,9 @@
 """Validate munozsmithmiles against fixed MATLAB (Octave) reference output.
 
-See tests/generate_fixtures.m for how tests/fixtures/munozsmithmiles.csv
-was produced, and munozsmithmiles.m's version history for the two bugs
-fixed there (a cache check and a feval/eval mix-up) so this reference
-output could be produced at all.
+tests/generate_fixtures.m produces tests/fixtures/munozsmithmiles.csv.
+See munozsmithmiles.m's version history for the two bugs fixed there: a
+cache check and a feval/eval mix-up. Without those fixes, this
+reference output could not exist at all.
 """
 
 import csv
@@ -15,7 +15,7 @@ import pytest
 from evobbo_instances import munozsmithmiles
 from evobbo_instances._expr import ExpressionError
 
-FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures"
 
 # Same fixed inputs as tests/generate_fixtures.m.
 X2 = np.array([[-1.0, -0.3, 0.0, 0.4, 1.0], [0.5, -0.4, 0.0, 0.3, -0.6]])

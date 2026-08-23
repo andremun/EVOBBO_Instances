@@ -3,8 +3,8 @@ function y = square(x)
 % square.m
 % -------------------------------------------------------------------------
 %
-% Elementwise square, y = x.^2. This building-block function is called by
-% some of the expressions stored in munozsmithmiles.mat.
+% Elementwise square, y = x.^2. munozsmithmiles.mat stores some
+% expressions that call this building-block function.
 %
 % By: Mario Andres Munoz Acosta
 %     School of Mathematics and Statistics

@@ -1,8 +1,8 @@
 """Validate langdonpoli against fixed MATLAB (Octave) reference output.
 
-See tests/generate_fixtures.m for how tests/fixtures/langdonpoli.csv was
-produced, and PYTHON_PORT.md for the provenance caveat (generated with
-GNU Octave, not MathWorks MATLAB).
+tests/generate_fixtures.m produces tests/fixtures/langdonpoli.csv. See
+PYTHON_PORT.md for the provenance caveat: GNU Octave generated this
+file, not MathWorks MATLAB.
 """
 
 import csv
@@ -13,7 +13,7 @@ import pytest
 
 from evobbo_instances import langdonpoli
 
-FIXTURES_DIR = Path(__file__).resolve().parent / "fixtures"
+FIXTURES_DIR = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures"
 
 # Same fixed input grid as tests/generate_fixtures.m.
 X = np.array(
@@ -47,3 +47,8 @@ def test_out_of_domain_is_zeroed():
     # 2 * 6.0 = 12.0 > 10, so this sample should be forced to 0.
     Y = langdonpoli(X, 1)
     assert Y[0] == 0.0
+
+
+def test_wrong_row_count_raises():
+    with pytest.raises(ValueError):
+        langdonpoli(X[:1, :], 1)  # 1 row. langdonpoli needs exactly 2.
