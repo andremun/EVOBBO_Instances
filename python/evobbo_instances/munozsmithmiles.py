@@ -15,7 +15,7 @@ tests/test_munozsmithmiles.py.
 import numpy as np
 from scipy.io import loadmat
 
-from ._expr import ExpressionError, evaluate_expression
+from ._expr import ExpressionError, evaluate_tree, parse_expression
 from ._paths import resolve_data_dir
 
 _VALID_SID = (1, 2, 3)
@@ -27,6 +27,15 @@ _VALID_D = (2, 10)
 # keys on every input that changes which expressions are loaded, so it
 # is always correct to switch sid, d, or data_dir between calls.
 _CACHE = {}
+
+# Cache of parsed expression trees, keyed by (data_dir, sid, d, fid).
+# Parsing an expression string costs roughly 5-10x more than evaluating
+# an already-parsed tree (measured; longer expressions cost more to
+# parse, proportionally). An optimizer calling munozsmithmiles() once
+# per iteration with a fixed (sid, d, fid) would otherwise re-parse the
+# same string on every call; this cache makes every call after the
+# first skip straight to evaluation.
+_TREE_CACHE = {}
 
 
 def _load_expressions(sid, d, data_dir):
@@ -93,11 +102,17 @@ def munozsmithmiles(X, sid, d, fid, data_dir=None):
             f"functions in experiment s{sid}d{d}"
         )
 
-    expr = exprs[fid - 1]
+    tree_key = (str(data_dir), sid, d, fid)
     try:
-        return evaluate_expression(expr, X)
-    except ExpressionError as exc:
-        raise ExpressionError(
-            f"Function {fid} in experiment s{sid}d{d} has no expression "
-            f"(empty individual): {exc}"
-        ) from exc
+        tree = _TREE_CACHE[tree_key]
+    except KeyError:
+        try:
+            tree = parse_expression(exprs[fid - 1])
+        except ExpressionError as exc:
+            raise ExpressionError(
+                f"Function {fid} in experiment s{sid}d{d} has no expression "
+                f"(empty individual): {exc}"
+            ) from exc
+        _TREE_CACHE[tree_key] = tree
+
+    return evaluate_tree(tree, X)

@@ -159,8 +159,49 @@ def _evaluate(node, X):
     raise ExpressionError(f"Unknown node kind {kind!r}")
 
 
+def parse_expression(expr):
+    """Parse one instance expression string into a reusable tree.
+
+    Parsing is the expensive part of evaluating an expression (roughly
+    5-10x the cost of evaluating an already-parsed tree, longer for
+    longer expressions). Callers that evaluate the same expression
+    repeatedly, for example munozsmithmiles() called once per iteration
+    of an optimizer with a fixed (sid, d, fid), should parse once with
+    this function and reuse the tree with evaluate_tree(), rather than
+    calling evaluate_expression() (which parses every time) in a loop.
+
+    Args:
+        expr: the MATLAB expression string, e.g. "plus(X(1,:),X(2,:))".
+
+    Returns:
+        An opaque tree object for evaluate_tree().
+    """
+    expr = expr.strip()
+    if not expr or expr == "[]":
+        raise ExpressionError("Empty expression (no instance defined)")
+    return _Parser(_tokenize(expr), expr).parse()
+
+
+def evaluate_tree(tree, X):
+    """Evaluate a tree from parse_expression() over candidate solutions X.
+
+    Args:
+        tree: the return value of parse_expression().
+        X: numpy array of shape (d, N).
+
+    Returns:
+        A numpy array of shape (N,).
+    """
+    result = _evaluate(tree, X)
+    return np.broadcast_to(np.asarray(result, dtype=float), (X.shape[1],)).copy()
+
+
 def evaluate_expression(expr, X):
-    """Evaluate one instance expression string over candidate solutions X.
+    """Parse and evaluate one instance expression string in one call.
+
+    Convenience wrapper for a single evaluation. Prefer parse_expression()
+    plus evaluate_tree() when evaluating the same expr repeatedly: see
+    parse_expression()'s docstring.
 
     Args:
         expr: the MATLAB expression string, e.g. "plus(X(1,:),X(2,:))".
@@ -169,9 +210,4 @@ def evaluate_expression(expr, X):
     Returns:
         A numpy array of shape (N,).
     """
-    expr = expr.strip()
-    if not expr or expr == "[]":
-        raise ExpressionError("Empty expression (no instance defined)")
-    tree = _Parser(_tokenize(expr), expr).parse()
-    result = _evaluate(tree, X)
-    return np.broadcast_to(np.asarray(result, dtype=float), (X.shape[1],)).copy()
+    return evaluate_tree(parse_expression(expr), X)

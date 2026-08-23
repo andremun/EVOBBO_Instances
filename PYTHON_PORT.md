@@ -153,6 +153,77 @@ loader (`munozsmithmiles.m` / `.py`) reads the CSV form yet; it exists
 for cross-platform and human readability, see the README's Datasets
 section.
 
+## Scalability with dimensionality (2026 investigation)
+
+`d` itself is not a free scaling parameter for any of these three
+functions: `munozsmithmiles` only has stored expressions for `d` in
+`{2, 10}`, `langdonpoli` is defined in 2D only, and `clustergallagher`'s
+problem dimensionality is `k * p`, with `p` fixed by whichever dataset
+is passed in. What *does* scale, and was profiled directly (Python,
+this repository's sandbox, 4 cores) rather than assumed:
+
+**`munozsmithmiles`: parsing dominated repeated-call cost.** An
+optimizer calling `munozsmithmiles()` once per iteration with a fixed
+`(sid, d, fid)` re-parsed the same expression string from scratch every
+call. Measured: 617 us/call for 2000 repeated single-candidate calls,
+versus 0.4 us/candidate batched (`X` with `N=2000` columns in one
+call) -- parsing was roughly 1500x the cost of evaluation at that
+extreme, and isolating the two confirmed it directly (388 us to parse a
+604-character expression, versus 83 us to evaluate the same
+already-parsed tree). Fixed: `_expr.py` now exposes `parse_expression()`
+and `evaluate_tree()` separately, and `munozsmithmiles.py` caches the
+parsed tree per `(data_dir, sid, d, fid)`, alongside the existing
+per-`(sid, d)` expression-list cache. Measured after the fix: 109
+us/call for the same repeated-call benchmark, a 5.7x improvement, pure
+caching with no change to any computed value (all 290 tests still
+pass). `matlab/munozsmithmiles.m` has the same underlying cost
+(`eval()` re-parses every call too); MATLAB has no direct equivalent to
+caching a parsed AST, though `str2func` on the expression string could
+plausibly give a comparable win by compiling once into a reusable
+function handle -- not implemented here, flagged as a follow-up worth
+prototyping and measuring, not assumed to work.
+
+**`clustergallagher`: two plausible vectorization approaches, both
+measured and rejected; one viable but explicitly opt-in.** All three
+tested against the largest dataset in this repository (`skin.mat`,
+n=245057, p=3):
+
+- A k-d tree (`scipy.spatial.cKDTree`) built on the k cluster centers,
+  queried with all n dataset points, sounds like the right structure
+  for a nearest-neighbor problem, but was **6-13x slower** than the
+  existing brute-force `cdist` (52.9 ms/candidate vs 3.96-6.13 ms/candidate
+  measured across two runs): k is always small here (a handful of
+  cluster centers), and building/querying a tree for that few points
+  does not amortize against `cdist`'s single BLAS-backed matrix
+  operation. Rejected.
+- Batching several candidates into one manually-broadcast distance
+  computation (trading memory for fewer, larger numpy calls) was
+  **4-60x slower** than the existing per-candidate loop, worse as batch
+  size grew (232.9 ms/candidate at batch size 60 vs 4.1 ms/candidate for
+  the plain loop): the naive broadcast materializes a `(batch, k, n, p)`
+  intermediate array that `cdist`'s internal implementation avoids.
+  Rejected. This also confirms, empirically, that
+  `clustergallagher.m`'s own documented choice (v2, 2015: replace a
+  fully vectorized version with this per-candidate loop) was not merely
+  a memory compromise; it is close to the actual performance optimum
+  for this problem shape.
+- Thread-based parallelism across the `N`-candidate loop (`cdist`
+  releases the GIL during its BLAS call) gave a real **2.9x speedup**
+  with 4 worker threads on the large dataset (3.6 ms/candidate down to
+  1.26 ms/candidate; 8 threads on 4 physical cores regressed slightly,
+  as expected from oversubscription) -- but was **12x slower** on the
+  small `iris.mat` case (n=150): thread-pool overhead dominates when
+  per-candidate work is already sub-millisecond. This is genuinely
+  useful, but only conditionally, so it is a candidate for an opt-in
+  parameter (for example `max_workers=None` meaning today's serial
+  behavior), not a default. Not yet implemented; proposed here for a
+  decision before adding it, since it changes `clustergallagher`'s
+  signature again so soon after the orientation change above.
+
+**`langdonpoli`: no scaling concern found.** Already fully vectorized
+across `N` with no per-candidate loop; measured sub-microsecond per
+candidate from `N=100` to `N=1,000,000`.
+
 ## Recommendation
 
 Do not port `matlab/bbob.v13.09/`. Point users to the official COCO/BBOB
