@@ -1,9 +1,9 @@
 """Validate munozsmithmiles against fixed MATLAB (Octave) reference output.
 
-See tests/generate_fixtures.m for how tests/fixtures/munozsmithmiles.csv
-was produced, and munozsmithmiles.m's version history for the two bugs
-fixed there (a cache check and a feval/eval mix-up) so this reference
-output could be produced at all.
+tests/generate_fixtures.m produces tests/fixtures/munozsmithmiles.csv.
+See munozsmithmiles.m's version history for the two bugs fixed there: a
+cache check and a feval/eval mix-up. Without those fixes, this
+reference output could not exist at all.
 """
 
 import csv

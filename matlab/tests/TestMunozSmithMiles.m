@@ -4,19 +4,20 @@ classdef TestMunozSmithMiles < matlab.unittest.TestCase
 % -------------------------------------------------------------------------
 %
 % Checks munozsmithmiles.m against the fixed reference values in
-% tests/fixtures/munozsmithmiles.csv, produced by
-% tests/generate_fixtures.m from the same candidate solutions this class
-% reads from tests/fixtureInputs.m. Also checks the error paths
-% munozsmithmiles.m documents in its own header: an out-of-range fid, an
-% invalid strategy/dimension combination, and the 3 individuals (all in
-% s2d10) that carry no expression. See munozsmithmiles.m's version
-% history for why those errors exist at all.
+% tests/fixtures/munozsmithmiles.csv. tests/generate_fixtures.m
+% produced those values from the same candidate solutions this class
+% reads from tests/fixtureInputs.m. This class also checks the error
+% paths munozsmithmiles.m documents in its own header: an out-of-range
+% fid, an invalid strategy/dimension combination, and the 3 individuals
+% (all in s2d10) that carry no expression. See munozsmithmiles.m's
+% version history for why those errors exist at all.
 %
-% Also checks that X must have exactly d rows (see testWrongRowCountErrors
-% below): before that guard was added, passing X with more rows than d
-% silently used only the first d and ignored the rest, matching the
-% Python port's stricter behavior only by accident of the Python port
-% validating this from the start.
+% This class also checks that X must have exactly d rows (see
+% testWrongRowCountErrors below). Before that guard existed, X with
+% more rows than d silently used only the first d rows and ignored the
+% rest. This happened to match the Python port's stricter behavior, but
+% only by accident. The Python port validated this from the start.
+% MATLAB did not.
 %
 % By: Mario Andres Munoz Acosta
 %     School of Mathematics and Statistics
@@ -27,7 +28,7 @@ classdef TestMunozSmithMiles < matlab.unittest.TestCase
 
 properties (TestParameter)
     % Each field is one (sid, d) combination actually defined in
-    % munozsmithmiles.mat; the field name becomes the readable test name.
+    % munozsmithmiles.mat. The field name becomes the readable test name.
     Config = struct('s1d2', [1 2], 's1d10', [1 10], 's2d2', [2 2], ...
                      's2d10', [2 10], 's3d2', [3 2], 's3d10', [3 10]);
     Fid = num2cell(1:5);
@@ -56,9 +57,10 @@ methods (Test)
         rows = testCase.Fixture(testCase.Fixture.sid == sid ...
             & testCase.Fixture.d == d & testCase.Fixture.fid == Fid, :);
         % s2d10 fid=2 (and 41, 54, not covered by this TestParameter
-        % range) has no stored expression; skip rather than fail, since
-        % this combination is not meant to be evaluated. See
-        % testEmptyIndividualErrors below for that case specifically.
+        % range) has no stored expression. This test skips it instead
+        % of failing, since this combination is not meant to be
+        % evaluated. See testEmptyIndividualErrors below for that case
+        % specifically.
         testCase.assumeFalse(isempty(rows), ...
             'No fixture rows for this (sid,d,fid): a known-empty individual.');
 
@@ -102,7 +104,7 @@ methods (Test)
     end
 
     function testWrongRowCountErrors(testCase)
-        % X10 has 10 rows; requesting d=2 expects exactly 2.
+        % X10 has 10 rows. Requesting d=2 expects exactly 2 rows.
         X10 = testCase.XByD(10);
         try
             munozsmithmiles(X10, 1, 2, 1);

@@ -1,7 +1,7 @@
 """Validate clustergallagher against fixed MATLAB (Octave) reference output.
 
-See tests/generate_fixtures.m for how tests/fixtures/clustergallagher.csv
-was produced.
+tests/generate_fixtures.m produces tests/fixtures/clustergallagher.csv.
+See that script for details.
 """
 
 import csv
@@ -59,8 +59,9 @@ def test_mismatched_dimensionality_raises():
 def test_transposed_dataset_warns():
     # A dataset with more columns than rows is unusual for these
     # benchmark datasets and is exactly what an accidental transpose
-    # looks like. Built synthetically (2 points, 12 features, k=1) so
-    # the kp % p guard does not also raise and mask the warning.
+    # looks like. This test builds the dataset synthetically (2 points,
+    # 12 features, k=1), so the kp % p guard does not also raise and
+    # hide the warning.
     synthetic_dataset = np.ones((2, 12))
     synthetic_X = np.ones((12, 1))
     with pytest.warns(UserWarning, match="more columns"):

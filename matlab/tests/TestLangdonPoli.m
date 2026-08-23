@@ -4,10 +4,10 @@ classdef TestLangdonPoli < matlab.unittest.TestCase
 % -------------------------------------------------------------------------
 %
 % Checks langdonpoli.m against the fixed reference values in
-% tests/fixtures/langdonpoli.csv. Those values were produced by
-% tests/generate_fixtures.m from the same input grid this class reads
-% from tests/fixtureInputs.m, so a mismatch here means langdonpoli.m
-% itself changed behavior, not that the two definitions of the input
+% tests/fixtures/langdonpoli.csv. tests/generate_fixtures.m produced
+% those values from the same input grid this class reads from
+% tests/fixtureInputs.m. So a mismatch here means langdonpoli.m itself
+% changed behavior. It does not mean the two definitions of the input
 % drifted apart.
 %
 % By: Mario Andres Munoz Acosta
@@ -63,8 +63,8 @@ methods (Test)
     end
 
     function testWrongRowCountErrors(testCase)
-        % langdonpoli.m needs exactly 2 rows; this repo's functions are
-        % defined in 2 dimensions only.
+        % langdonpoli.m needs exactly 2 rows. This repository's
+        % functions are defined in 2 dimensions only.
         badX = testCase.X(1, :);
         try
             langdonpoli(badX, 1);

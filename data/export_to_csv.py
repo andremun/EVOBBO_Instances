@@ -1,29 +1,30 @@
 """Export every .mat file in this directory to a CSV mirror.
 
 Run from anywhere: python data/export_to_csv.py. Regenerate after any
-change to the .mat files (there should not normally be one; they are
-the published, static instances and datasets this repository exists to
-distribute).
+change to the .mat files. Such a change should not normally happen:
+these are the published, static instances and datasets this repository
+exists to distribute.
 
-Two kinds of export, matching the two kinds of .mat file in this
-directory:
+This script performs two kinds of export, one for each kind of .mat
+file in this directory:
 
 - Each numeric dataset .mat file (all of them except
   munozsmithmiles.mat) has one variable, `data`, a plain (n, p) matrix.
-  Its CSV mirror has the same name and holds that matrix directly, no
-  header row, one row per data point, matching data's own orientation.
+  Its CSV mirror has the same name. It holds that matrix directly, with
+  no header row, one row per data point, in data's own orientation.
 - munozsmithmiles.mat stores six cell arrays of GP expression strings
-  (s1d2, s1d10, s2d2, s2d10, s3d2, s3d10), keyed by strategy id and
-  dimension. Its CSV mirror, munozsmithmiles.csv, is a single long-format
-  table with columns sid, d, fid, expression: one row per stored
-  individual, 1520 rows total (including the 3 with an empty
-  expression, see munozsmithmiles.m's version history), fid numbered
-  1-based to match the MATLAB and Python function signatures.
+  (s1d2, s1d10, s2d2, s2d10, s3d2, s3d10). Strategy id and dimension
+  identify each array. Its CSV mirror, munozsmithmiles.csv, is a single
+  long-format table with columns sid, d, fid, expression. It has one
+  row per stored individual, 1520 rows total. This includes the 3
+  individuals with an empty expression (see munozsmithmiles.m's version
+  history). fid is numbered starting at 1, to match the MATLAB and
+  Python function signatures.
 
-Neither export changes the data: this is an additional, cross-platform
+Neither export changes the data. Each is an additional, cross-platform
 representation of what the .mat files already hold, not a replacement
-for them (see README.md's Reusing this repository section for why both
-formats stay).
+for them. See README.md's Reusing this repository section for why both
+formats stay.
 
 By: Mario Andres Munoz Acosta
     School of Mathematics and Statistics

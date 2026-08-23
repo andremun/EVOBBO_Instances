@@ -2,23 +2,24 @@
 % generate_fixtures.m
 % -------------------------------------------------------------------------
 %
-% Regenerates the MATLAB reference fixtures in fixtures/, used by both
-% the Python test suite (python/tests/) and the matlab.unittest test
-% suite (matlab/tests/) to check their respective implementations
-% against the MATLAB source. Run this after any change to
-% matlab/munozsmithmiles.m, matlab/langdonpoli.m, or
-% matlab/clustergallagher.m. All paths below are resolved relative to
-% this file, so it can be run from any current directory.
+% This script regenerates the MATLAB reference fixtures in fixtures/.
+% The Python test suite (python/tests/) and the matlab.unittest test
+% suite (matlab/tests/) both use these fixtures to check their
+% implementations against the MATLAB source. Run this script after any
+% change to matlab/munozsmithmiles.m, matlab/langdonpoli.m, or
+% matlab/clustergallagher.m. It resolves every path relative to its own
+% location, so it can run from any current directory.
 %
-% Inputs come from fixtureInputs.m, fixed and deterministic (not random
-% numbers), so the fixtures do not depend on the random number generator
-% of the MATLAB or Octave version that runs this script, and so
-% matlab/tests/ can re-run the exact same inputs this script used.
+% Inputs come from fixtureInputs.m. They are fixed and deterministic,
+% not random numbers, so the fixtures do not depend on the random
+% number generator of the MATLAB or Octave version that runs this
+% script. This also lets matlab/tests/ re-run the exact same inputs
+% this script used.
 %
-% Generated with GNU Octave 8.4.0 (verify with real MATLAB when
-% available; none of the three ported functions uses a toolbox or a
-% MATLAB-version-specific language feature). matlab/tests/ now
-% re-validates these fixtures against real MATLAB on every CI run, see
+% Octave 8.4.0 generated these fixtures. Verify with real MATLAB when
+% available. None of the three ported functions uses a toolbox or a
+% MATLAB-version-specific language feature. matlab/tests/ now
+% re-validates these fixtures against real MATLAB on every CI run. See
 % .github/workflows/matlab-tests.yml.
 %
 % By: Mario Andres Munoz Acosta
@@ -62,7 +63,7 @@ fclose(fid_lp);
 % -------------------------------------------------------------------------
 load(fullfile(data_dir, 'iris.mat'));
 Xc = inputs.ClusterGallagherX;
-Y = clustergallagher(Xc, data);  % data is (n x p); clustergallagher no longer needs it transposed
+Y = clustergallagher(Xc, data);  % data is (n x p). clustergallagher no longer needs it transposed.
 
 fid_cg = fopen(fullfile(fixtures_dir, 'clustergallagher.csv'), 'w');
 fprintf(fid_cg, 'sample,y\n');
@@ -96,8 +97,7 @@ for c = 1:size(configs, 1)
         end
     end
 end
-% Also cover the 3 known-empty individuals in s2d10, recorded as an
-% explicit expected-failure list rather than a value.
+% The loop above also skips the 3 known-empty individuals in s2d10.
 fclose(fid_ms);
 
 disp(['Fixtures written to ' fixtures_dir]);

@@ -3,9 +3,8 @@ function y = negexp(x)
 % negexp.m
 % -------------------------------------------------------------------------
 %
-% Elementwise negative exponential, y = exp(-x). This building-block
-% function is called by some of the expressions stored in
-% munozsmithmiles.mat.
+% Elementwise negative exponential, y = exp(-x). munozsmithmiles.mat
+% stores some expressions that call this building-block function.
 %
 % By: Mario Andres Munoz Acosta
 %     School of Mathematics and Statistics

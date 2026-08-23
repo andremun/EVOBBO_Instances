@@ -1,10 +1,9 @@
 """Python port of the EVOBBO_Instances MATLAB functions.
 
-This package reproduces the three instance-generating functions
-distributed as MATLAB files in ``matlab/`` at the root of this
-repository: ``munozsmithmiles.m``, ``langdonpoli.m``, and
-``clustergallagher.m``. See the repository README for background and
-PYTHON_PORT.md for the port's scope and validation approach.
+This package reproduces three functions this repository distributes as
+MATLAB files in ``matlab/``: ``munozsmithmiles.m``, ``langdonpoli.m``,
+and ``clustergallagher.m``. See the repository README for background.
+See PYTHON_PORT.md for the port's scope and validation approach.
 
 Every function in this package reads its input data from the .mat
 files in ``data/`` at the repository root by default. Pass

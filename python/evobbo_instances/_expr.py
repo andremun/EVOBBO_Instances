@@ -7,9 +7,12 @@ example:
 
 This module parses that grammar directly and evaluates it with numpy,
 rather than calling Python's eval() on untrusted-looking text. The
-grammar uses only: the binary functions plus/minus/times, the unary
-functions exp/negexp/cos/sin/square/tanh, indexing into a row of X
-(X(1,:), X(2,:), ...), and numeric literals in brackets ([-10.4887]).
+grammar uses only:
+
+- The binary functions plus, minus, times
+- The unary functions exp, negexp, cos, sin, square, tanh
+- Indexing into a row of X: X(1,:), X(2,:), and so on
+- Numeric literals in brackets, for example [-10.4887]
 """
 
 import re
@@ -48,7 +51,7 @@ _BINARY_FUNCS = {
 
 
 class ExpressionError(ValueError):
-    """Raised for a malformed or unsupported expression string."""
+    """This error means the expression string is malformed or unsupported."""
 
 
 def _tokenize(expr):
@@ -162,13 +165,14 @@ def _evaluate(node, X):
 def parse_expression(expr):
     """Parse one instance expression string into a reusable tree.
 
-    Parsing is the expensive part of evaluating an expression (roughly
-    5-10x the cost of evaluating an already-parsed tree, longer for
-    longer expressions). Callers that evaluate the same expression
-    repeatedly, for example munozsmithmiles() called once per iteration
-    of an optimizer with a fixed (sid, d, fid), should parse once with
-    this function and reuse the tree with evaluate_tree(), rather than
-    calling evaluate_expression() (which parses every time) in a loop.
+    Parsing is the expensive part of evaluating an expression, roughly
+    5-10x the cost of evaluating an already-parsed tree, and longer for
+    longer expressions. Callers that evaluate the same expression
+    repeatedly should parse it once with this function, then reuse the
+    tree with evaluate_tree(). One example: munozsmithmiles(), called
+    once per optimizer iteration with a fixed (sid, d, fid). Calling
+    evaluate_expression() in a loop instead parses the expression every
+    time.
 
     Args:
         expr: the MATLAB expression string, e.g. "plus(X(1,:),X(2,:))".

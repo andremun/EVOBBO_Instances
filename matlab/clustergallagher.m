@@ -13,34 +13,36 @@ function Y = clustergallagher(X,dataset)
 %
 % Input:
 %   X       - a (kp x N) matrix of candidate solutions, where each column
-%             vector represents the positions of k cluster centers.  That
+%             vector represents the positions of k cluster centers. That
 %             is, the dimensionality of the optimization problem is kp.
-%   dataset - an (n x p) dataset to be clustered (n data points of
-%             dimensionality p), one row per point: the same orientation
-%             the 'data' variable in this package's .mat files already
-%             uses (all files but 'munozsmithmiles.mat'). Do not
-%             transpose it before calling.
+%   dataset - an (n x p) dataset to cluster: n data points of
+%             dimensionality p, one row per point. This is the same
+%             orientation the 'data' variable in this package's .mat
+%             files already uses (all files but 'munozsmithmiles.mat').
+%             Do not transpose it before calling.
 % Output:
-%   Y       - a (N x 1) vector of fitness values
+%   Y       - a (N x 1) vector of fitness values.
 %
 % Version History:
 %     v1: 30/07/2015
 %     v2: 01/09/2015 | Removed redundant operations and improved speed and
 %                      memory access by changing the arrayfun for a simple
 %                      for-loop.
-%     v3: 08/07/2019 | Version published in MATILDA re "Generating New
-%                      Space-Filling Test Instances for Continuous
-%                      Black-Box Optimization" Accepted in Evol. Comput.
-%     v4: 2026 | Breaking change: dataset is now (n x p), matching the
-%                'data' variable's native orientation in this package's
-%                .mat files, so callers no longer transpose it by hand.
-%                Callers still on the old (p x n) convention now get a
-%                clear error from the new size guards below in the
-%                common case (p and kp not sharing a common factor
-%                pattern), rather than a silent wrong answer. Also added
-%                an explicit guard for kp not a multiple of p, and a
-%                warning for a dataset shaped (p x n) by mistake (more
-%                columns than rows is unusual for these datasets).
+%     v3: 08/07/2019 | Version published in MATILDA, for the paper
+%                      "Generating New Space-Filling Test Instances for
+%                      Continuous Black-Box Optimization" (Evol.
+%                      Comput., 2019).
+%     v4: 2026 | Breaking change: dataset is now (n x p). This matches
+%                the 'data' variable's native orientation in this
+%                package's .mat files, so callers no longer transpose it
+%                by hand. A caller still on the old (p x n) convention
+%                now gets a clear error in the common case. The new
+%                size guards below catch it: p and kp rarely share a
+%                common factor by accident. This replaces a silent
+%                wrong answer. Also added an explicit guard for kp not
+%                a multiple of p. Also added a warning for a dataset
+%                shaped (p x n) by mistake: more columns than rows is
+%                unusual for these datasets.
 %
 
 % Formatting the data

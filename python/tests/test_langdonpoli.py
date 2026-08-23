@@ -1,8 +1,8 @@
 """Validate langdonpoli against fixed MATLAB (Octave) reference output.
 
-See tests/generate_fixtures.m for how tests/fixtures/langdonpoli.csv was
-produced, and PYTHON_PORT.md for the provenance caveat (generated with
-GNU Octave, not MathWorks MATLAB).
+tests/generate_fixtures.m produces tests/fixtures/langdonpoli.csv. See
+PYTHON_PORT.md for the provenance caveat: GNU Octave generated this
+file, not MathWorks MATLAB.
 """
 
 import csv
@@ -51,4 +51,4 @@ def test_out_of_domain_is_zeroed():
 
 def test_wrong_row_count_raises():
     with pytest.raises(ValueError):
-        langdonpoli(X[:1, :], 1)  # 1 row; langdonpoli needs exactly 2
+        langdonpoli(X[:1, :], 1)  # 1 row. langdonpoli needs exactly 2.

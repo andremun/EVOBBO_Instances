@@ -12,9 +12,10 @@ Evol. Comput., 2019.
 The repository provides instances from four sources:
 
 1. **Generated instances** from the methodology in the paper above, through
-   the function `matlab/munozsmithmiles.m` (needs `matlab/square.m` and
-   `matlab/negexp.m`; see that function's version history for two bugs
-   fixed in 2026 that made every call fail before the fix).
+   the function `matlab/munozsmithmiles.m`. This function needs
+   `matlab/square.m` and `matlab/negexp.m`. See that function's version
+   history for two bugs, fixed in 2026, that made every call fail before
+   the fix.
 2. **Reference BBOB instances** from the "Comparing Continuous Optimization"
    benchmarking platform v13.09 (2011), in `matlab/bbob.v13.09/`. Use the
    [current COCO/BBOB platform](https://github.com/numbbo/coco) for new
@@ -30,9 +31,9 @@ The repository provides instances from four sources:
    `matlab/clustergallagher.m`, evaluated over the clustering datasets in
    this repository (see [Datasets](#datasets) below).
 
-Sources 1, 3, and 4 above each have a Python equivalent, see
+Sources 1, 3, and 4 above each have a Python equivalent. See
 [Usage](#usage) below. Source 2, the vendored BBOB v13.09 platform, is
-not ported; see [Reusing this repository](#reusing-this-repository).
+not ported. See [Reusing this repository](#reusing-this-repository).
 
 ## Contents
 
@@ -76,9 +77,10 @@ EVOBBO_Instances/
 ### MATLAB
 
 The MATLAB code needs a current version of
-[MATLAB](https://www.mathworks.com). It has been tested on r2018b, and
-should work on earlier versions too. Most functions are vectorized, so
-they run fast under MATLAB. No toolbox beyond base MATLAB is required.
+[MATLAB](https://www.mathworks.com). It runs on r2018b. It should also
+run on earlier versions, though this is not tested. Most functions are
+vectorized, so they run fast. No toolbox beyond base MATLAB is
+required.
 Add `matlab/` to the MATLAB path before calling any function:
 
 ```matlab
@@ -101,7 +103,7 @@ pip install -e .
 
 This installs the `evobbo_instances` package and its two dependencies,
 `numpy` and `scipy`. Run `pip install -e ".[test]"` instead to also get
-`pytest`, and run the test suite with `pytest tests/` (still from
+`pytest`. Then run the test suite with `pytest tests/` (still from
 `python/`).
 
 ## Usage
@@ -140,8 +142,8 @@ returning a silently wrong value.
 
 This function needs `data/munozsmithmiles.mat`. Both the MATLAB and
 Python functions find it there automatically, relative to their own
-location; pass `data_dir` to the Python function to point somewhere
-else instead.
+location. To point somewhere else instead, pass `data_dir` to the
+Python function.
 
 ### Langdon and Poli instances (`matlab/langdonpoli.m` / `python/evobbo_instances/langdonpoli.py`)
 
@@ -176,22 +178,23 @@ data = loadmat('data/iris.mat')['data']  # shape (150, 4) = (n, p)
 Y = clustergallagher(X, data)            # dataset: shape (n, p), as loaded
 ```
 
-`clustergallagher`'s `dataset` argument changed orientation in 2026 (from
-`(p, n)` to `(n, p)`, removing the transpose callers used to need). A
-caller still transposing before calling now gets a clear error in the
-common case, since `dataset`'s swapped shape almost never divides `X`'s
-row count evenly; see `matlab/clustergallagher.m`'s version history.
+`clustergallagher`'s `dataset` argument changed orientation in 2026,
+from `(p, n)` to `(n, p)`. Callers no longer need to transpose it. A
+caller who still transposes it before calling now gets a clear error in
+the common case: `dataset`'s swapped shape almost never divides `X`'s
+row count evenly. See `matlab/clustergallagher.m`'s version history for
+details.
 
 ## Datasets
 
-Each `.mat` file below, in `data/` (all files except
-`munozsmithmiles.mat`), stores one variable, `data`, of shape (n points
-x p features), for use as the `dataset` input to `clustergallagher`.
-Each also has a CSV mirror of the same name (for example
-`data/iris.csv` next to `data/iris.mat`): plain numbers, no header row,
-same `(n, p)` orientation, readable by anything that reads CSV. Both
-formats hold the same values; regenerate the CSVs from the `.mat` files
-with `python data/export_to_csv.py` if the `.mat` files ever change.
+Each `.mat` file below (all files except `munozsmithmiles.mat`) is in
+`data/`. It stores one variable, `data`, of shape (n points x p
+features), for use as the `dataset` input to `clustergallagher`. Each
+also has a CSV mirror of the same name (for example `data/iris.csv`
+next to `data/iris.mat`): plain numbers, no header row, same `(n, p)`
+orientation, readable by anything that reads CSV. Both formats hold the
+same values. If the `.mat` files ever change, regenerate the CSVs with
+`python data/export_to_csv.py`.
 
 | File | Points (n) | Features (p) |
 |---|---|---|
@@ -220,7 +223,7 @@ with `python data/export_to_csv.py` if the `.mat` files ever change.
 | `data/yeast.mat` | 1484 | 8 |
 
 These datasets come from public sources such as the UCI Machine Learning
-Repository. They are redistributed here only as fixed inputs for
+Repository. This repository redistributes them only as fixed inputs for
 `clustergallagher`.
 
 ## Reusing this repository
@@ -232,27 +235,28 @@ Repository. They are redistributed here only as fixed inputs for
   is a single copy of the data.
 - **A Python port of the three instance-generating functions**
   (`matlab/munozsmithmiles.m`, `matlab/langdonpoli.m`,
-  `matlab/clustergallagher.m`) ships in `python/evobbo_instances/`, see
-  [Usage](#usage) above. Its output is checked in `python/tests/` against
-  the same reference values in `tests/fixtures/` that `matlab/tests/`
-  checks the MATLAB source against, on every CI run, on real MATLAB. See
-  [`PYTHON_PORT.md`](PYTHON_PORT.md) for how those reference values were
-  produced and what the port does and does not cover.
+  `matlab/clustergallagher.m`) ships in `python/evobbo_instances/`. See
+  [Usage](#usage) above. `python/tests/` checks the port's output
+  against the reference values in `tests/fixtures/`. `matlab/tests/`
+  checks the MATLAB source against the same values. Both run on every CI
+  run, on real MATLAB. See [`PYTHON_PORT.md`](PYTHON_PORT.md) for how
+  those reference values were produced, and for what the port does and
+  does not cover.
 - **Data files load in Python with no conversion.** Every `.mat` file in
   `data/` is a MATLAB v5 file. Read it with
   `scipy.io.loadmat('data/iris.mat')['data']`. For a tool or language
   without a MATLAB reader at all, read the CSV mirror instead
   (`data/iris.csv`): same values, no dependency beyond a CSV reader.
-  `data/munozsmithmiles.csv` mirrors `munozsmithmiles.mat` too, as a
-  single long-format table (`sid, d, fid, expression`) instead of six
-  cell arrays: it is not yet wired into either loader, so it is a
-  human-readable, greppable view of the same 1520 expressions, not
-  (yet) an alternative way to call `munozsmithmiles`.
+  `data/munozsmithmiles.csv` mirrors `munozsmithmiles.mat` too. It uses
+  one long-format table (`sid, d, fid, expression`) instead of six cell
+  arrays. Neither loader reads this CSV file yet. For now, it is a
+  human-readable, greppable view of the same 1520 expressions, not an
+  alternative way to call `munozsmithmiles`.
 - **`matlab/bbob.v13.09/` is a frozen 2011 snapshot** of the COCO
-  benchmarking platform, kept here only as a historical reference for
-  the paper, and is not ported. New work should use the [current
-  COCO/BBOB platform](https://github.com/numbbo/coco), which ships an
-  official Python interface.
+  benchmarking platform. This repository keeps it only as a historical
+  reference for the paper, and does not port it. New work should use the
+  [current COCO/BBOB platform](https://github.com/numbbo/coco), which
+  ships an official Python interface.
 
 ## Reproducibility
 

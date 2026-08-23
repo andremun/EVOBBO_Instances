@@ -4,17 +4,21 @@ Fitness function following M. Gallagher, "Towards improved benchmarking
 of black-box optimization algorithms using clustering problems", Soft
 Comput. 20(10) 3835-3849, 2016.
 
-Ported from the MATLAB source, replacing the embedded L2_distance helper
-(there credited to Roland Bunschoten and Laurens van der Maaten) with the
-equivalent scipy.spatial.distance.cdist. Like the MATLAB source, this
-loops over the N candidate solutions one at a time rather than
-vectorizing across all of them: clustergallagher.m's own version history
-notes that an earlier, fully vectorized version (arrayfun over N) was
-deliberately replaced with this per-candidate loop for speed and memory
-reasons, since a full N-way vectorization would need one (k, n) distance
-matrix per candidate held in memory at once. The per-candidate distance
-computation itself is vectorized, through cdist. Validated against
-MATLAB reference output in tests/test_clustergallagher.py.
+This port replaces the embedded L2_distance helper (credited there to
+Roland Bunschoten and Laurens van der Maaten) with the equivalent
+scipy.spatial.distance.cdist.
+
+Like the MATLAB source, this loops over the N candidate solutions one
+at a time. It does not vectorize across all of them.
+clustergallagher.m's own version history explains why: an earlier,
+fully vectorized version (arrayfun over N) existed first. It was
+replaced deliberately with this per-candidate loop, for speed and
+memory. A full N-way vectorization would need one (k, n) distance
+matrix per candidate, all held in memory at once. The per-candidate
+distance computation itself is vectorized, through cdist.
+
+tests/test_clustergallagher.py validates this port against MATLAB
+reference output.
 """
 
 import warnings
@@ -30,23 +34,23 @@ def clustergallagher(X, dataset):
         X: array_like of shape (k*p, N). Each column holds the
             positions of k cluster centers of dimensionality p, so the
             dimensionality of the optimization problem is k*p.
-        dataset: array_like of shape (n, p), n data points of
-            dimensionality p to cluster: one row per point, the same
-            orientation the `data` array already has in this
-            repository's .mat files. Do not transpose it before
-            passing it here.
+        dataset: array_like of shape (n, p): n data points of
+            dimensionality p to cluster, one row per point. This is the
+            same orientation the `data` array already has in this
+            repository's .mat files. Do not transpose it before you
+            pass it here.
 
     Returns:
-        A numpy array of shape (N,) with one fitness value per column
-        of X: the sum, over all n data points, of the squared distance
-        to the nearest of the k cluster centers.
+        A numpy array of shape (N,), with one fitness value per column
+        of X. Each value is the sum, over all n data points, of the
+        squared distance to the nearest of the k cluster centers.
 
     Note:
         Before this version, `dataset` was (p, n) and callers
-        transposed the native (n, p) `data` array by hand. A caller
-        still doing that transpose now likely hits the ValueError
-        below (kp not a multiple of the wrong, swapped p), rather than
-        silently getting a wrong result.
+        transposed the native (n, p) `data` array by hand. A caller who
+        still transposes it now likely hits the ValueError below: kp is
+        not a multiple of the wrong, swapped p. This replaces a
+        silently wrong result.
     """
     X = np.asarray(X, dtype=float)
     dataset = np.asarray(dataset, dtype=float)

@@ -3,12 +3,11 @@ function inputs = fixtureInputs()
 % fixtureInputs.m
 % -------------------------------------------------------------------------
 %
-% Fixed, deterministic test inputs shared by generate_fixtures.m (which
-% writes tests/fixtures/*.csv from these inputs) and the matlab.unittest
-% test classes in matlab/tests/ (which re-run the same inputs and check
-% against those committed fixtures). Keeping the inputs in one place
-% means both consumers always agree on what was actually evaluated to
-% produce each committed reference value.
+% This file holds fixed, deterministic test inputs. generate_fixtures.m
+% writes tests/fixtures/*.csv from these inputs. The matlab.unittest
+% test classes in matlab/tests/ re-run the same inputs and check the
+% result against those committed fixtures. This keeps both consumers in
+% agreement about what produced each committed reference value.
 %
 % Output:
 %   inputs - a struct with one field per function under test:

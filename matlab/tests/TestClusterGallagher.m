@@ -4,9 +4,10 @@ classdef TestClusterGallagher < matlab.unittest.TestCase
 % -------------------------------------------------------------------------
 %
 % Checks clustergallagher.m against the fixed reference values in
-% tests/fixtures/clustergallagher.csv, produced by
-% tests/generate_fixtures.m from the same candidate solutions this class
-% reads from tests/fixtureInputs.m, evaluated against the iris dataset.
+% tests/fixtures/clustergallagher.csv. tests/generate_fixtures.m
+% produced those values. It used the same candidate solutions this
+% class reads from tests/fixtureInputs.m, and evaluated them against
+% the iris dataset.
 %
 % By: Mario Andres Munoz Acosta
 %     School of Mathematics and Statistics
@@ -55,12 +56,12 @@ methods (Test)
     end
 
     function testTransposedDatasetWarns(testCase)
-        % A dataset passed in the old (p x n) convention, or otherwise
-        % with more columns than rows, should warn: this shape is
-        % unusual for these benchmark datasets and is exactly what an
-        % accidental transpose looks like. Built synthetically here
-        % (2 points, 12 features, k=1) so the mod(kp,p) guard does not
-        % also fire and mask the warning under test.
+        % A dataset in the old (p x n) convention, or any dataset with
+        % more columns than rows, should warn. This shape is unusual
+        % for these benchmark datasets, and it is exactly what an
+        % accidental transpose looks like. This test builds the dataset
+        % synthetically (2 points, 12 features, k=1), so the mod(kp,p)
+        % guard does not also fire and hide the warning under test.
         syntheticDataset = ones(2, 12);
         syntheticX = ones(12, 1);
         testCase.verifyWarning(@() clustergallagher(syntheticX, syntheticDataset), ...

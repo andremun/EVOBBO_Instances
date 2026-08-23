@@ -2,11 +2,11 @@
 % run_tests.m
 % -------------------------------------------------------------------------
 %
-% Thin runner for the matlab.unittest suite in this folder. Invoked by
-% .github/workflows/matlab-tests.yml through matlab-actions/run-command.
-% Resolves every path from this file's own location rather than the
-% MATLAB current directory: matlab.unittest does not guarantee the
-% current directory stays put during a run.
+% This is a thin runner for the matlab.unittest suite in this folder.
+% .github/workflows/matlab-tests.yml invokes it through
+% matlab-actions/run-command. It resolves every path from this file's
+% own location, not from the MATLAB current directory. matlab.unittest
+% does not guarantee the current directory stays put during a run.
 %
 % By: Mario Andres Munoz Acosta
 %     School of Mathematics and Statistics
@@ -26,8 +26,8 @@ repoRoot = fileparts(fileparts(testsDir));      % repository root
 suite = TestSuite.fromFolder(testsDir, 'IncludingSubfolders', false);
 runner = TestRunner.withTextOutput();
 
-% Coverage of matlab/ only, not matlab/bbob.v13.09/: that vendored
-% snapshot is not exercised by this suite, see PYTHON_PORT.md.
+% Coverage of matlab/ only, not matlab/bbob.v13.09/: this suite does
+% not exercise that vendored snapshot. See PYTHON_PORT.md.
 coverageReportFile = fullfile(repoRoot, 'coverage.xml');
 sourceFolders = {fullfile(repoRoot, 'matlab')};
 runner.addPlugin(CodeCoveragePlugin.forFolder(sourceFolders, ...
